@@ -1,0 +1,61 @@
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
+
+interface PetTagProps {
+  breed: string;
+  age: number;
+  species?: string;
+  compact?: boolean;
+  onPress?: () => void;
+}
+
+export function PetTag({ breed, age, species, compact, onPress }: PetTagProps) {
+  const ageLabel = age < 1 ? 'Puppy' : age === 1 ? '1 yr' : `${age} yrs`;
+  const emoji = species === 'cat' ? '🐱' : species === 'bird' ? '🐦' : '🐶';
+
+  const Wrapper = onPress ? TouchableOpacity : View;
+
+  return (
+    <Wrapper onPress={onPress} style={styles.container} activeOpacity={0.7}>
+      <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+      <ThemedText style={[styles.text, compact && styles.textCompact]}>
+        {breed}
+      </ThemedText>
+      <View style={styles.dot} />
+      <ThemedText style={[styles.text, compact && styles.textCompact]}>
+        {ageLabel}
+      </ThemedText>
+    </Wrapper>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3EEFF',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 4,
+    alignSelf: 'flex-start',
+  },
+  emoji: {
+    fontSize: 13,
+  },
+  text: {
+    fontSize: 12,
+    color: '#6B21A8',
+    fontWeight: '600',
+  },
+  textCompact: {
+    fontSize: 11,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#A78BFA',
+  },
+});
