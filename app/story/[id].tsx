@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   StatusBar,
+  DimensionValue,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,26 +25,46 @@ interface Story {
   media_type: 'image' | 'video';
   expires_at: string;
   pet_name?: string;
+  created_at?: string;
 }
 
 export default function StoryViewerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const [story, setStory] = useState<Story | null>(null);
+  const [storyList, setStoryList] = useState<Story[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [mediaFailed, setMediaFailed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const DURATION = 5000;
 
-  const loadStory = useCallback(async () => {
+  const loadStorySequence = useCallback(async () => {
     try {
-      const { data } = await api.get(`/stories/${id}`);
-      setStory(data.story);
+      const storyId = Number(id);
+      const { data } = await api.get('/stories');
+      const allStories: Story[] = data?.stories ?? [];
+      const currentStory = allStories.find((s) => s.id === storyId);
+
+      if (!currentStory) {
+        router.back();
+        return;
+      }
+
+      const userStories = allStories
+        .filter((s) => s.user_id === currentStory.user_id)
+        .sort((a, b) => {
+          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+          if (aTime !== bTime) return aTime - bTime;
+          return a.id - b.id;
+        });
+
+      setStoryList(userStories);
+      setCurrentIndex(0);
+      setProgress(0);
       setMediaFailed(false);
-      api.post(`/stories/${id}/view`).catch(() => {});
-      startTick();
     } catch {
       router.back();
     } finally {
@@ -52,9 +73,37 @@ export default function StoryViewerScreen() {
   }, [id, router]);
 
   useEffect(() => {
-    loadStory();
+    loadStorySequence();
     return () => clearTick();
-  }, [loadStory]);
+  }, [loadStorySequence]);
+
+  useEffect(() => {
+    const currentStory = storyList[currentIndex];
+    if (!currentStory) return;
+
+    setProgress(0);
+    setMediaFailed(false);
+    api.post(`/stories/${currentStory.id}/view`).catch(() => {});
+    startTick();
+  }, [currentIndex, storyList]);
+
+  const goNext = () => {
+    if (currentIndex >= storyList.length - 1) {
+      router.back();
+      return;
+    }
+
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  const goPrev = () => {
+    if (currentIndex <= 0) {
+      router.back();
+      return;
+    }
+
+    setCurrentIndex((prev) => prev - 1);
+  };
 
   const startTick = () => {
     clearTick();
@@ -63,7 +112,7 @@ export default function StoryViewerScreen() {
       setProgress((p) => {
         if (p >= 100) {
           clearTick();
-          router.back();
+          goNext();
           return 100;
         }
         return p + step;
@@ -86,6 +135,7 @@ export default function StoryViewerScreen() {
     );
   }
 
+  const story = storyList[currentIndex];
   if (!story) return null;
 
   return (
@@ -115,8 +165,18 @@ export default function StoryViewerScreen() {
       />
 
       {/* Progress bar */}
-      <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
+      <View style={styles.progressRow}>
+        {storyList.map((item, idx) => {
+          let width: DimensionValue = '0%';
+          if (idx < currentIndex) width = '100%';
+          if (idx === currentIndex) width = `${Math.min(progress, 100)}%`;
+
+          return (
+            <View key={item.id} style={styles.progressBar}>
+              <View style={[styles.progressFill, { width }]} />
+            </View>
+          );
+        })}
       </View>
 
       {/* Author row */}
@@ -139,9 +199,9 @@ export default function StoryViewerScreen() {
         </View>
       )}
 
-      {/* Tap zones: left to close, right to close */}
-      <TouchableOpacity style={styles.tapLeft} onPress={() => router.back()} />
-      <TouchableOpacity style={styles.tapRight} onPress={() => router.back()} />
+      {/* Tap zones: left to previous, right to next */}
+      <TouchableOpacity style={styles.tapLeft} onPress={goPrev} />
+      <TouchableOpacity style={styles.tapRight} onPress={goNext} />
     </SafeAreaView>
   );
 }
@@ -166,11 +226,16 @@ const styles = StyleSheet.create({
     right: 0,
     height: 140,
   },
-  progressBar: {
+  progressRow: {
     position: 'absolute',
     top: 44,
     left: 12,
     right: 12,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  progressBar: {
+    flex: 1,
     height: 3,
     backgroundColor: 'rgba(255,255,255,0.35)',
     borderRadius: 2,

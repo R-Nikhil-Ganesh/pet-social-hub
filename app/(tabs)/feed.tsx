@@ -18,11 +18,10 @@ import { useFeedStore } from '@/store/feedStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
 
-type FeedTab = 'moments' | 'stories' | 'hotTakes';
+type FeedTab = 'moments' | 'hotTakes';
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: 'moments', label: '📸 Moments' },
-  { key: 'stories', label: '⏳ Stories' },
   { key: 'hotTakes', label: '🔥 Hot Takes' },
 ];
 
@@ -34,10 +33,8 @@ export default function FeedScreen() {
 
   const {
     posts,
-    stories,
     hotTakes,
     isLoadingFeed,
-    isLoadingStories,
     activeTab,
     setActiveTab,
     fetchFeed,
@@ -140,30 +137,6 @@ export default function FeedScreen() {
             />
           }
           showsVerticalScrollIndicator={false}
-        />
-      ) : activeTab === 'stories' ? (
-        <FlatList
-          key="stories"
-          data={stories}
-          keyExtractor={(item) => `story-${item.id}`}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.storyListItem}
-              onPress={() => router.push(`/story/${item.id}`)}
-            >
-              <ThemedText style={styles.storyEmoji}>🎬</ThemedText>
-              <View style={styles.storyMeta}>
-                <ThemedText style={styles.storyPet}>{item.pet.name}</ThemedText>
-                <ThemedText style={styles.storyBreed}>{item.pet.breed}</ThemedText>
-              </View>
-              <ThemedText style={styles.storyChevron}>›</ThemedText>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={renderHeader}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
-          }
         />
       ) : (
         <FlatList
@@ -274,19 +247,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  storyListItem: {
-    flex: 0.5,
-    margin: 6,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  storyEmoji: { fontSize: 28 },
-  storyMeta: { flex: 1 },
-  storyPet: { fontSize: 14, fontWeight: '700', color: '#18181B' },
-  storyBreed: { fontSize: 12, color: '#71717A' },
-  storyChevron: { fontSize: 20, color: '#D4D4D8' },
 });

@@ -8,9 +8,10 @@ interface StoryCircleProps {
   story: Story;
   onPress: () => void;
   isOwn?: boolean;
+  showAddBadge?: boolean;
 }
 
-export function StoryCircle({ story, onPress, isOwn }: StoryCircleProps) {
+export function StoryCircle({ story, onPress, isOwn, showAddBadge }: StoryCircleProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.85}>
       <LinearGradient
@@ -27,7 +28,7 @@ export function StoryCircle({ story, onPress, isOwn }: StoryCircleProps) {
               <ThemedText style={styles.fallbackText}>🐾</ThemedText>
             </View>
           )}
-          {isOwn && (
+          {showAddBadge && (
             <View style={styles.addBadge}>
               <ThemedText style={styles.addText}>+</ThemedText>
             </View>
@@ -35,10 +36,7 @@ export function StoryCircle({ story, onPress, isOwn }: StoryCircleProps) {
         </View>
       </LinearGradient>
       <ThemedText numberOfLines={1} style={styles.name}>
-        {isOwn ? 'Your Story' : story.pet.name}
-      </ThemedText>
-      <ThemedText numberOfLines={1} style={styles.breed}>
-        {story.pet.breed}
+        {isOwn ? 'Your Story' : story.display_name}
       </ThemedText>
     </TouchableOpacity>
   );
@@ -98,12 +96,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#18181B',
-    maxWidth: 68,
-    textAlign: 'center',
-  },
-  breed: {
-    fontSize: 10,
-    color: '#71717A',
     maxWidth: 68,
     textAlign: 'center',
   },

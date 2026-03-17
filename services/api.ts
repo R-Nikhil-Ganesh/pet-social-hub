@@ -32,10 +32,23 @@ const api = axios.create({
   timeout: 15000,
 });
 
+function isFormDataLike(data: unknown) {
+  if (!data) return false;
+  if (typeof FormData !== 'undefined' && data instanceof FormData) return true;
+  // React Native FormData polyfill often exposes _parts.
+  return Boolean((data as { _parts?: unknown })._parts);
+}
+
 api.interceptors.request.use(async (config) => {
-  // Let Axios/browser set multipart boundary automatically for FormData.
-  if (config.data instanceof FormData) {
-    if (config.headers) {
+  if (!config.headers) {
+    config.headers = {};
+  }
+
+  // React Native Android can fail to infer multipart correctly unless this header is explicit.
+  if (isFormDataLike(config.data)) {
+    if (Platform.OS === 'android') {
+      config.headers['Content-Type'] = 'multipart/form-data';
+    } else {
       delete config.headers['Content-Type'];
       delete config.headers['content-type'];
     }

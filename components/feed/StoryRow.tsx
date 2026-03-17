@@ -16,10 +16,20 @@ export function StoryRow() {
   };
 
   const handleOwnStoryPress = () => {
+    if (myStory) {
+      router.push(`/story/${myStory.id}`);
+      return;
+    }
+
     router.push('/create-story');
   };
 
   const myStory = stories.find((s) => s.user_id === user?.id);
+  const uniqueStoriesByUser = stories.reduce<Story[]>((acc, currentStory) => {
+    const alreadyIncluded = acc.some((story) => story.user_id === currentStory.user_id);
+    if (!alreadyIncluded) acc.push(currentStory);
+    return acc;
+  }, []);
 
   return (
     <View style={styles.wrapper}>
@@ -53,11 +63,12 @@ export function StoryRow() {
             }
           }
           isOwn
+          showAddBadge={!myStory}
           onPress={handleOwnStoryPress}
         />
 
         {/* Other Stories (exclude own) */}
-        {stories
+        {uniqueStoriesByUser
           .filter((s) => s.user_id !== user?.id)
           .map((story) => (
             <StoryCircle

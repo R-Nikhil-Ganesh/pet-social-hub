@@ -65,8 +65,8 @@ interface FeedState {
   isLoadingHotTakes: boolean;
   page: number;
   hasMore: boolean;
-  activeTab: 'moments' | 'stories' | 'hotTakes';
-  setActiveTab: (tab: 'moments' | 'stories' | 'hotTakes') => void;
+  activeTab: 'moments' | 'hotTakes';
+  setActiveTab: (tab: 'moments' | 'hotTakes') => void;
   fetchFeed: (refresh?: boolean) => Promise<void>;
   fetchStories: () => Promise<void>;
   fetchHotTakes: () => Promise<void>;
@@ -98,7 +98,9 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     try {
       const { data } = await api.get(`/feed?page=${nextPage}&limit=10`);
       set({
-        posts: refresh ? data.posts : [...get().posts, ...data.posts],
+        posts: refresh
+          ? (data.posts ?? []).map(normalizePost)
+          : [...get().posts, ...(data.posts ?? []).map(normalizePost)],
         page: nextPage + 1,
         hasMore: data.has_more,
       });
@@ -158,13 +160,21 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   },
 
   createPost: async (form) => {
-    await api.post('/posts', form, {
-      });
+    const { data } = await api.post('/posts', form, {});
+    const createdPost = data?.post ? normalizePost(data.post) : null;
+
+    if (createdPost) {
+      set({ posts: [createdPost, ...get().posts] });
+      return;
+    }
+
     await get().fetchFeed(true);
   },
 
   createStory: async (form) => {
-    await api.post('/stories', form);
+    await api.post('/stories', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     await get().fetchStories();
   },
 
@@ -187,6 +197,23 @@ function normalizeStory(story: any): Story {
     ...story,
     pet,
     viewed: Boolean(story.viewed),
+  };
+}
+
+function normalizePost(post: any): Post {
+  return {
+    ...post,
+    pet: post.pet ?? {
+      id: 0,
+      name: post.pet_name || post.display_name || 'Pet',
+      breed: post.pet_breed || '',
+      age: Number(post.pet_age ?? 0),
+      photo_url: post.pet_photo_url || '',
+    },
+    reaction_count: Number(post.reaction_count ?? 0),
+    comment_count: Number(post.comment_count ?? 0),
+    user_reacted: Boolean(post.user_reacted),
+    score: Number(post.score ?? 0),
   };
 }
 

@@ -24,6 +24,8 @@ export default function CreateStoryScreen() {
 
   const [mediaUri, setMediaUri] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [mediaMimeType, setMediaMimeType] = useState<string | null>(null);
+  const [mediaFileName, setMediaFileName] = useState<string | null>(null);
   const [selectedPetId, setSelectedPetId] = useState<number | null>(
     user?.pet_profiles?.[0]?.id ?? null
   );
@@ -45,6 +47,8 @@ export default function CreateStoryScreen() {
       const asset = result.assets[0];
       setMediaUri(asset.uri);
       setMediaType(asset.type === 'video' ? 'video' : 'image');
+      setMediaMimeType(asset.mimeType || null);
+      setMediaFileName(asset.fileName || null);
     }
   };
 
@@ -53,28 +57,34 @@ export default function CreateStoryScreen() {
     setSubmitting(true);
     try {
       const form = new FormData() as any;
-      const filename = mediaUri.split('/').pop() ?? 'story.jpg';
-      const mimeType = mediaType === 'video' ? 'video/mp4' : 'image/jpeg';
+      const filename = mediaFileName || mediaUri.split('/').pop() || (mediaType === 'video' ? 'story.mp4' : 'story.jpg');
+      const mimeType = mediaMimeType || (mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
+      const normalizedUri =
+        Platform.OS === 'android' && mediaUri.startsWith('/') ? `file://${mediaUri}` : mediaUri;
+
       if (selectedPetId) {
         form.append('pet_id', String(selectedPetId));
       }
+
       if (Platform.OS === 'web') {
         const response = await fetch(mediaUri);
         const blob = await response.blob();
         form.append('media', blob, filename);
       } else {
-        form.append('media', { uri: mediaUri, name: filename, type: mimeType } as any);
+        form.append('media', { uri: normalizedUri, name: filename, type: mimeType } as any);
       }
+
       await createStory(form);
       router.back();
     } catch (err: any) {
+      const status = err?.response?.status;
       const msg =
         err?.response?.data?.error ||
         err?.response?.data?.message ||
         (err?.message?.includes('Network Error')
           ? 'Cannot reach server. Check API URL and backend status.'
           : 'Could not share story. Please try again.');
-      Alert.alert('Error', msg);
+      Alert.alert('Error', status ? `${msg} (HTTP ${status})` : msg);
     } finally {
       setSubmitting(false);
     }
