@@ -9,12 +9,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { PostCard } from '@/components/feed/PostCard';
 import { StoryRow } from '@/components/feed/StoryRow';
 import { HotTakesBoard } from '@/components/feed/HotTakesBoard';
 import { PointsBadge } from '@/components/ui/PointsBadge';
+import { getSocket } from '@/services/socket';
 import { useFeedStore } from '@/store/feedStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
 
@@ -28,8 +31,13 @@ const TABS: { key: FeedTab; label: string }[] = [
 export default function FeedScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
   const totalPoints = usePointsStore((s) => s.totalPoints);
   const fetchPoints = usePointsStore((s) => s.fetchPoints);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount);
+  const receiveNotification = useNotificationStore((s) => s.receiveNotification);
+  const removeNotification = useNotificationStore((s) => s.removeNotification);
 
   const {
     posts,
@@ -49,11 +57,36 @@ export default function FeedScreen() {
     fetchStories();
     fetchHotTakes();
     fetchPoints();
+    fetchUnreadCount();
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const socket = getSocket(token);
+    const handleNotificationNew = (payload: { notification?: Parameters<typeof receiveNotification>[0] }) => {
+      if (payload.notification) {
+        receiveNotification(payload.notification);
+      }
+    };
+    const handleNotificationRemove = (payload: { id?: number }) => {
+      if (payload.id) {
+        removeNotification(payload.id);
+      }
+    };
+
+    socket.on('notification:new', handleNotificationNew);
+    socket.on('notification:remove', handleNotificationRemove);
+
+    return () => {
+      socket.off('notification:new', handleNotificationNew);
+      socket.off('notification:remove', handleNotificationRemove);
+    };
+  }, [token, receiveNotification, removeNotification]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchFeed(true), fetchStories(), fetchHotTakes()]);
+    await Promise.all([fetchFeed(true), fetchStories(), fetchHotTakes(), fetchUnreadCount()]);
     setRefreshing(false);
   }, []);
 
@@ -67,6 +100,16 @@ export default function FeedScreen() {
       <View style={styles.topBar}>
         <ThemedText style={styles.appTitle}>🐾 Pawprint</ThemedText>
         <View style={styles.topRight}>
+          <TouchableOpacity onPress={() => router.push('/notifications' as never)} style={styles.notifyBtn}>
+            <Ionicons name="notifications-outline" size={21} color="#18181B" />
+            {unreadCount > 0 && (
+              <View style={styles.notifyBadge}>
+                <ThemedText style={styles.notifyBadgeText}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </ThemedText>
+              </View>
+            )}
+          </TouchableOpacity>
           <PointsBadge points={totalPoints} size="sm" onPress={() => router.push('/rewards')} />
           <TouchableOpacity onPress={() => router.push('/create-post')} style={styles.createBtn}>
             <ThemedText style={styles.createBtnText}>＋</ThemedText>
@@ -182,6 +225,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  notifyBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F4F4F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifyBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifyBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
   },
   createBtn: {
     width: 34,
