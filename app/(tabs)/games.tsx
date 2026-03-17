@@ -5,7 +5,6 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -28,7 +27,7 @@ export default function GamesScreen() {
     fetchLeaderboard();
     fetchChallenges();
     fetchPoints();
-  }, []);
+  }, [fetchChallenges, fetchLeaderboard, fetchPoints]);
 
   const handleGamePress = (mode: GameMode) => {
     switch (mode) {

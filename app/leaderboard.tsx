@@ -16,7 +16,7 @@ export default function LeaderboardScreen() {
 
   useEffect(() => {
     fetchLeaderboard().finally(() => setLoading(false));
-  }, []);
+  }, [fetchLeaderboard]);
 
   const medal = (rank: number) => {
     if (rank === 1) return '🥇';
@@ -54,7 +54,7 @@ export default function LeaderboardScreen() {
               <ThemedText style={styles.username}>@{item.username}</ThemedText>
             </View>
             <View style={styles.scoreCol}>
-              <ThemedText style={styles.score}>{item.score.toLocaleString()}</ThemedText>
+              <ThemedText style={styles.score}>{item.points.toLocaleString()}</ThemedText>
               <ThemedText style={styles.scoreLbl}>pts</ThemedText>
             </View>
           </View>

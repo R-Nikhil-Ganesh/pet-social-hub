@@ -4,8 +4,7 @@ import api from '../services/api';
 export interface PointsTransaction {
   id: number;
   action: string;
-  points: number;
-  description: string;
+  amount: number;
   created_at: string;
 }
 
@@ -14,8 +13,9 @@ export interface Reward {
   title: string;
   description: string;
   points_cost: number;
-  reward_type: 'badge' | 'contest_boost' | 'perk';
-  icon_emoji: string;
+  reward_type?: 'badge' | 'contest_boost' | 'perk';
+  icon_emoji?: string;
+  image_url?: string;
   redeemed: boolean;
 }
 

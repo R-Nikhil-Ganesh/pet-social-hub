@@ -27,7 +27,11 @@ function HotTakeCard({ hotTake }: HotTakeCardProps) {
         <Avatar uri={hotTake.avatar_url} size={32} />
         <View style={styles.cardMeta}>
           <ThemedText style={styles.cardUser}>{hotTake.display_name}</ThemedText>
-          <PetTag breed={hotTake.pet.breed} age={hotTake.pet.age} compact />
+          {hotTake.pet ? (
+            <PetTag breed={hotTake.pet.breed} age={hotTake.pet.age} compact />
+          ) : (
+            <ThemedText style={styles.cardUsername}>@{hotTake.username}</ThemedText>
+          )}
         </View>
         <View style={[styles.flair, { backgroundColor: flair.bg }]}>
           <ThemedText style={[styles.flairText, { color: flair.color }]}>
@@ -125,6 +129,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#18181B',
+  },
+  cardUsername: {
+    fontSize: 11,
+    color: '#71717A',
   },
   flair: {
     borderRadius: 10,

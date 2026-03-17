@@ -75,6 +75,7 @@ export interface LeaderboardEntry {
   display_name: string;
   avatar_url: string;
   points: number;
+  score?: number;
 }
 
 interface GameState {
@@ -149,7 +150,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ isLoadingGames: true });
     try {
       const { data } = await api.get('/games/photo-contest/active');
-      set({ activeContest: data.contest });
+      const contest = data.contest ?? {
+        id: 1,
+        title: 'Weekly Photo Contest',
+        description: 'Upload your best pet photo and vote for your favorites.',
+        end_at: '',
+        entry_count: (data.entries ?? []).length,
+        entries: data.entries ?? [],
+      };
+      set({ activeContest: contest });
     } finally {
       set({ isLoadingGames: false });
     }
@@ -184,7 +193,15 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   fetchChallenges: async () => {
     const { data } = await api.get('/games/challenges');
-    set({ challenges: data.challenges });
+    set({
+      challenges: (data.challenges ?? []).map((challenge: any) => ({
+        ...challenge,
+        points_reward: Number(challenge.points_reward ?? challenge.points ?? 0),
+        streak_count: Number(challenge.streak_count ?? 0),
+        completion_rate: Number(challenge.completion_rate ?? 0),
+        completed_today: Boolean(challenge.completed_today),
+      })),
+    });
   },
 
   completeChallenge: async (challengeId) => {
@@ -198,7 +215,12 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   fetchBreedGuesses: async () => {
     const { data } = await api.get('/games/breed-guess');
-    set({ breedGuesses: data.entries });
+    set({
+      breedGuesses: (data.entries ?? []).map((entry: any) => ({
+        ...entry,
+        options: entry.options ?? [],
+      })),
+    });
   },
 
   submitBreedGuess: async (entryId, guess) => {
@@ -215,6 +237,12 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   fetchLeaderboard: async () => {
     const { data } = await api.get('/games/leaderboard');
-    set({ leaderboard: data.leaderboard });
+    set({
+      leaderboard: (data.leaderboard ?? []).map((entry: any) => ({
+        ...entry,
+        points: Number(entry.points ?? entry.score ?? 0),
+        score: Number(entry.score ?? entry.points ?? 0),
+      })),
+    });
   },
 }));

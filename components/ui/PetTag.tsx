@@ -14,20 +14,24 @@ export function PetTag({ breed, age, species, compact, onPress }: PetTagProps) {
   const ageLabel = age < 1 ? 'Puppy' : age === 1 ? '1 yr' : `${age} yrs`;
   const emoji = species === 'cat' ? '🐱' : species === 'bird' ? '🐦' : '🐶';
 
-  const Wrapper = onPress ? TouchableOpacity : View;
-
-  return (
-    <Wrapper onPress={onPress} style={styles.container} activeOpacity={0.7}>
+  const content = (
+    <>
       <ThemedText style={styles.emoji}>{emoji}</ThemedText>
-      <ThemedText style={[styles.text, compact && styles.textCompact]}>
-        {breed}
-      </ThemedText>
+      <ThemedText style={[styles.text, compact && styles.textCompact]}>{breed}</ThemedText>
       <View style={styles.dot} />
-      <ThemedText style={[styles.text, compact && styles.textCompact]}>
-        {ageLabel}
-      </ThemedText>
-    </Wrapper>
+      <ThemedText style={[styles.text, compact && styles.textCompact]}>{ageLabel}</ThemedText>
+    </>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} style={styles.container} activeOpacity={0.7}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return <View style={styles.container}>{content}</View>;
 }
 
 const styles = StyleSheet.create({

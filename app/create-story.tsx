@@ -8,19 +8,25 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  ScrollView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { useFeedStore } from '@/store/feedStore';
+import { useAuthStore } from '@/store/authStore';
 
 export default function CreateStoryScreen() {
   const router = useRouter();
   const createStory = useFeedStore((s) => s.createStory);
+  const user = useAuthStore((s) => s.user);
 
   const [mediaUri, setMediaUri] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [selectedPetId, setSelectedPetId] = useState<number | null>(
+    user?.pet_profiles?.[0]?.id ?? null
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const pickMedia = async () => {
@@ -49,6 +55,9 @@ export default function CreateStoryScreen() {
       const form = new FormData() as any;
       const filename = mediaUri.split('/').pop() ?? 'story.jpg';
       const mimeType = mediaType === 'video' ? 'video/mp4' : 'image/jpeg';
+      if (selectedPetId) {
+        form.append('pet_id', String(selectedPetId));
+      }
       if (Platform.OS === 'web') {
         const response = await fetch(mediaUri);
         const blob = await response.blob();
@@ -58,8 +67,14 @@ export default function CreateStoryScreen() {
       }
       await createStory(form);
       router.back();
-    } catch {
-      Alert.alert('Error', 'Could not share story. Please try again.');
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        (err?.message?.includes('Network Error')
+          ? 'Cannot reach server. Check API URL and backend status.'
+          : 'Could not share story. Please try again.');
+      Alert.alert('Error', msg);
     } finally {
       setSubmitting(false);
     }
@@ -94,22 +109,46 @@ export default function CreateStoryScreen() {
 
       {/* Bottom bar */}
       <View style={styles.bottomBar}>
-        {mediaUri && (
-          <TouchableOpacity style={styles.retakeBtn} onPress={pickMedia}>
-            <ThemedText style={styles.retakeBtnText}>⟳ Retake</ThemedText>
+        {user?.pet_profiles?.length ? (
+          <View style={styles.petPickerWrap}>
+            <ThemedText style={styles.petPickerLabel}>Featuring</ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.petRow}>
+              {user.pet_profiles.map((pet) => (
+                <TouchableOpacity
+                  key={pet.id}
+                  style={[styles.petChip, selectedPetId === pet.id && styles.petChipActive]}
+                  onPress={() => setSelectedPetId(pet.id)}
+                >
+                  <ThemedText style={[styles.petChipText, selectedPetId === pet.id && styles.petChipTextActive]}>
+                    {pet.name}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={() => router.push('/add-pet')} style={styles.addPetHint}>
+            <ThemedText style={styles.addPetHintText}>+ Add a pet profile to tag stories</ThemedText>
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          style={[styles.shareBtn, (!mediaUri || submitting) && styles.shareBtnDisabled]}
-          onPress={handleShare}
-          disabled={!mediaUri || submitting}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <ThemedText style={styles.shareBtnText}>Share Story →</ThemedText>
+        <View style={styles.actionsRow}>
+          {mediaUri && (
+            <TouchableOpacity style={styles.retakeBtn} onPress={pickMedia}>
+              <ThemedText style={styles.retakeBtnText}>⟳ Retake</ThemedText>
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.shareBtn, (!mediaUri || submitting) && styles.shareBtnDisabled]}
+            onPress={handleShare}
+            disabled={!mediaUri || submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <ThemedText style={styles.shareBtnText}>Share Story →</ThemedText>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -139,10 +178,40 @@ const styles = StyleSheet.create({
   pickTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
   pickSub: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
   bottomBar: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     padding: 16,
-    gap: 10,
+    gap: 12,
     backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  petPickerWrap: { gap: 8 },
+  petPickerLabel: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  petRow: { gap: 8 },
+  petChip: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  petChipActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+  },
+  petChipText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  petChipTextActive: { color: '#fff' },
+  addPetHint: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  addPetHintText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   retakeBtn: {
     borderWidth: 1.5,

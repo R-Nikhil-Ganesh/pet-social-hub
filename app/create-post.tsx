@@ -178,6 +178,12 @@ export default function CreatePostScreen() {
               </ScrollView>
             </View>
           )}
+
+          {(!user?.pet_profiles || user.pet_profiles.length === 0) && (
+            <TouchableOpacity style={styles.noPetsCta} onPress={() => router.push('/add-pet')}>
+              <ThemedText style={styles.noPetsCtaText}>+ Add a pet profile to tag this post</ThemedText>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -267,4 +273,13 @@ const styles = StyleSheet.create({
   petChipSelected: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
   petChipText: { fontSize: 13, color: '#7C3AED', fontWeight: '600' },
   petChipTextSelected: { color: '#fff' },
+  noPetsCta: {
+    alignSelf: 'flex-start',
+    borderRadius: 10,
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 18,
+  },
+  noPetsCtaText: { fontSize: 12, fontWeight: '600', color: '#6D28D9' },
 });

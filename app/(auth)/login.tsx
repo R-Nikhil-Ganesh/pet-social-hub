@@ -33,6 +33,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email.trim().toLowerCase(), password);
+      router.replace('/(tabs)/feed');
     } catch (err: any) {
       const errorMessage =
         (err?.response?.status === 401

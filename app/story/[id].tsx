@@ -1,21 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
-  Image,
   TouchableOpacity,
   SafeAreaView,
-  Dimensions,
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image as ExpoImage } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import api from '@/services/api';
-
-const { width, height } = Dimensions.get('window');
 
 interface Story {
   id: number;
@@ -36,18 +33,15 @@ export default function StoryViewerScreen() {
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [mediaFailed, setMediaFailed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const DURATION = 5000;
 
-  useEffect(() => {
-    loadStory();
-    return () => clearTick();
-  }, [id]);
-
-  const loadStory = async () => {
+  const loadStory = useCallback(async () => {
     try {
       const { data } = await api.get(`/stories/${id}`);
       setStory(data.story);
+      setMediaFailed(false);
       api.post(`/stories/${id}/view`).catch(() => {});
       startTick();
     } catch {
@@ -55,7 +49,12 @@ export default function StoryViewerScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, router]);
+
+  useEffect(() => {
+    loadStory();
+    return () => clearTick();
+  }, [loadStory]);
 
   const startTick = () => {
     clearTick();
@@ -93,7 +92,20 @@ export default function StoryViewerScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar hidden />
       {/* Media */}
-      <Image source={{ uri: story.media_url }} style={styles.media} resizeMode="cover" />
+      {!mediaFailed ? (
+        <ExpoImage
+          source={{ uri: story.media_url }}
+          style={styles.media}
+          contentFit="cover"
+          transition={120}
+          onError={() => setMediaFailed(true)}
+        />
+      ) : (
+        <View style={styles.mediaFallback}>
+          <ThemedText style={styles.mediaFallbackTitle}>Could not load story media</ThemedText>
+          <ThemedText style={styles.mediaFallbackUrl}>{story.media_url}</ThemedText>
+        </View>
+      )}
 
       {/* Top overlay */}
       <LinearGradient
@@ -137,7 +149,16 @@ export default function StoryViewerScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   center: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
-  media: { position: 'absolute', top: 0, left: 0, width, height },
+  media: { ...StyleSheet.absoluteFillObject },
+  mediaFallback: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  mediaFallbackTitle: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  mediaFallbackUrl: { color: 'rgba(255,255,255,0.7)', fontSize: 12, textAlign: 'center' },
   topOverlay: {
     position: 'absolute',
     top: 0,
@@ -182,6 +203,6 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   petPillText: { fontSize: 13, color: '#fff', fontWeight: '600' },
-  tapLeft: { position: 'absolute', top: 0, left: 0, width: width * 0.35, height },
-  tapRight: { position: 'absolute', top: 0, right: 0, width: width * 0.35, height },
+  tapLeft: { position: 'absolute', top: 0, left: 0, bottom: 0, width: '35%' },
+  tapRight: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '35%' },
 });

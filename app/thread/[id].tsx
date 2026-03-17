@@ -68,8 +68,7 @@ export default function ThreadDetailScreen() {
   const threadId = Number(id);
   const user = useAuthStore((s) => s.user);
 
-  const { activeThread, replies, fetchThread, fetchReplies, createReply, upvoteThread } =
-    useCommunityStore();
+  const { activeThread, replies, fetchThread, createReply, upvoteThread } = useCommunityStore();
 
   const [replyInput, setReplyInput] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
@@ -77,8 +76,7 @@ export default function ThreadDetailScreen() {
 
   useEffect(() => {
     fetchThread(threadId);
-    fetchReplies(threadId);
-  }, [threadId]);
+  }, [fetchThread, threadId]);
 
   const handleReply = async () => {
     if (!replyInput.trim()) return;
@@ -106,7 +104,7 @@ export default function ThreadDetailScreen() {
     );
   }
 
-  const topLevelReplies = replies.filter((r) => !r.parent_reply_id);
+  const topLevelReplies = replies;
 
   return (
     <SafeAreaView style={styles.safeArea}>

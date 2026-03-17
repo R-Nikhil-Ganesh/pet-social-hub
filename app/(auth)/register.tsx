@@ -66,6 +66,7 @@ export default function RegisterScreen() {
         email: email.trim().toLowerCase(),
         password,
       });
+      router.replace('/(tabs)/feed');
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message ||

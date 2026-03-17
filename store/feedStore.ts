@@ -46,7 +46,7 @@ export interface HotTake {
   username: string;
   display_name: string;
   avatar_url: string;
-  pet: PetMeta;
+  pet?: PetMeta | null;
   content: string;
   media_url?: string;
   upvotes: number;
@@ -111,7 +111,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     set({ isLoadingStories: true });
     try {
       const { data } = await api.get('/stories');
-      set({ stories: data.stories });
+      set({ stories: (data.stories ?? []).map(normalizeStory) });
     } finally {
       set({ isLoadingStories: false });
     }
@@ -121,7 +121,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     set({ isLoadingHotTakes: true });
     try {
       const { data } = await api.get('/hot-takes');
-      set({ hotTakes: data.hot_takes });
+      set({ hotTakes: (data.hot_takes ?? []).map(normalizeHotTake) });
     } finally {
       set({ isLoadingHotTakes: false });
     }
@@ -173,3 +173,29 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     await get().fetchHotTakes();
   },
 }));
+
+function normalizeStory(story: any): Story {
+  const pet = story.pet ?? {
+    id: 0,
+    name: story.pet_name || story.display_name,
+    breed: story.pet_breed || 'Pet',
+    age: Number(story.pet_age ?? 0),
+    photo_url: story.pet_photo_url || '',
+  };
+
+  return {
+    ...story,
+    pet,
+    viewed: Boolean(story.viewed),
+  };
+}
+
+function normalizeHotTake(hotTake: any): HotTake {
+  return {
+    ...hotTake,
+    pet: hotTake.pet ?? null,
+    upvotes: Number(hotTake.upvotes ?? 0),
+    user_upvoted: Boolean(hotTake.user_upvoted),
+    comment_count: Number(hotTake.comment_count ?? 0),
+  };
+}

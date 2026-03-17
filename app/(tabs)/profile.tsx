@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -8,7 +8,6 @@ import {
   Image,
   Alert,
   RefreshControl,
-  FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,19 +27,18 @@ export default function ProfileScreen() {
   const { totalPoints, fetchPoints } = usePointsStore();
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeSection, setActiveSection] = useState<'posts' | 'pets'>('posts');
 
-  useEffect(() => {
-    fetchPoints();
-    loadMyPosts();
-  }, []);
-
-  const loadMyPosts = async () => {
+  const loadMyPosts = useCallback(async () => {
     try {
       const { data } = await api.get('/users/me/posts');
       setMyPosts(data.posts ?? []);
     } catch {}
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPoints();
+    loadMyPosts();
+  }, [fetchPoints, loadMyPosts]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -109,15 +107,15 @@ export default function ProfileScreen() {
             <ThemedText style={styles.statLabel}>Posts</ThemedText>
           </View>
           <View style={styles.statDivider} />
-          <TouchableOpacity style={styles.statBlock} onPress={() => router.push('/followers')}>
+          <View style={styles.statBlock}>
             <ThemedText style={styles.statValue}>{user.follower_count}</ThemedText>
             <ThemedText style={styles.statLabel}>Followers</ThemedText>
-          </TouchableOpacity>
+          </View>
           <View style={styles.statDivider} />
-          <TouchableOpacity style={styles.statBlock} onPress={() => router.push('/following')}>
+          <View style={styles.statBlock}>
             <ThemedText style={styles.statValue}>{user.following_count}</ThemedText>
             <ThemedText style={styles.statLabel}>Following</ThemedText>
-          </TouchableOpacity>
+          </View>
           <View style={styles.statDivider} />
           <TouchableOpacity style={styles.statBlock} onPress={() => router.push('/rewards')}>
             <PointsBadge points={totalPoints} size="sm" />
@@ -133,21 +131,28 @@ export default function ProfileScreen() {
           <ThemedText style={styles.editBtnText}>✏️ Edit Profile</ThemedText>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.managePetsBtn}
+          onPress={() => router.push('/my-pets')}
+        >
+          <ThemedText style={styles.managePetsBtnText}>🐾 Manage Pets</ThemedText>
+        </TouchableOpacity>
+
         {/* Pet Profiles */}
-        {user.pet_profiles?.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <ThemedText style={styles.sectionTitle}>🐾 My Pets</ThemedText>
-              <TouchableOpacity onPress={() => router.push('/add-pet')}>
-                <ThemedText style={styles.sectionAction}>+ Add pet</ThemedText>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>🐾 My Pets</ThemedText>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/add-pet' } as never)}>
+              <ThemedText style={styles.sectionAction}>+ Add pet</ThemedText>
+            </TouchableOpacity>
+          </View>
+          {user.pet_profiles?.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.petRow}>
               {user.pet_profiles.map((pet) => (
                 <TouchableOpacity
                   key={pet.id}
                   style={styles.petCard}
-                  onPress={() => router.push(`/pet/${pet.id}`)}
+                  onPress={() => router.push({ pathname: '/pet/[id]', params: { id: String(pet.id) } } as never)}
                 >
                   {pet.photo_url ? (
                     <Image source={{ uri: pet.photo_url }} style={styles.petPhoto} />
@@ -161,8 +166,16 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        )}
+          ) : (
+            <TouchableOpacity
+              style={styles.emptyPetsCard}
+              onPress={() => router.push({ pathname: '/add-pet' } as never)}
+            >
+              <ThemedText style={styles.emptyPetsTitle}>No pets added yet</ThemedText>
+              <ThemedText style={styles.emptyPetsSub}>Tap to add your first pet profile</ThemedText>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Posts Section */}
         <View style={styles.section}>
@@ -170,7 +183,7 @@ export default function ProfileScreen() {
           {myPosts.length === 0 ? (
             <View style={styles.emptyPosts}>
               <ThemedText style={styles.emptyPostsText}>
-                You haven't posted yet. Share your pet's first moment!
+                {"You haven't posted yet. Share your pet's first moment!"}
               </ThemedText>
               <TouchableOpacity
                 style={styles.createPostBtn}
@@ -260,6 +273,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   editBtnText: { color: '#7C3AED', fontSize: 15, fontWeight: '700' },
+  managePetsBtn: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#DDD6FE',
+    paddingVertical: 11,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  managePetsBtnText: { color: '#6D28D9', fontSize: 14, fontWeight: '700' },
   section: { paddingHorizontal: 16, marginBottom: 8 },
   sectionHeader: {
     flexDirection: 'row',
@@ -287,6 +311,16 @@ const styles = StyleSheet.create({
   },
   petPhotoEmoji: { fontSize: 32 },
   petName: { fontSize: 13, fontWeight: '700', color: '#18181B', textAlign: 'center' },
+  emptyPetsCard: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    borderRadius: 14,
+    padding: 14,
+    gap: 4,
+  },
+  emptyPetsTitle: { fontSize: 14, fontWeight: '700', color: '#18181B' },
+  emptyPetsSub: { fontSize: 12, color: '#71717A' },
   emptyPosts: {
     alignItems: 'center',
     padding: 30,

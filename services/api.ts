@@ -30,10 +30,17 @@ export const API_BASE_URL = __DEV__
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use(async (config) => {
+  // Let Axios/browser set multipart boundary automatically for FormData.
+  if (config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type'];
+      delete config.headers['content-type'];
+    }
+  }
+
   const token = await AsyncStorage.getItem('pawprint_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

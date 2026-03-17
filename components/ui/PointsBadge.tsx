@@ -17,21 +17,29 @@ export function PointsBadge({ points, size = 'md', onPress, showLabel }: PointsB
   const formatted =
     points >= 1000 ? `${(points / 1000).toFixed(1)}k` : `${points}`;
 
-  const Wrapper = onPress ? TouchableOpacity : View;
-
-  return (
-    <Wrapper
-      onPress={onPress}
-      activeOpacity={0.8}
-      style={[styles.container, { paddingHorizontal: padH, paddingVertical: padV }]}
-    >
+  const content = (
+    <>
       <ThemedText style={[styles.paw, { fontSize }]}>🐾</ThemedText>
       <ThemedText style={[styles.points, { fontSize }]}>{formatted}</ThemedText>
       {showLabel && (
         <ThemedText style={[styles.label, { fontSize: fontSize - 2 }]}>pts</ThemedText>
       )}
-    </Wrapper>
+    </>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.8}
+        style={[styles.container, { paddingHorizontal: padH, paddingVertical: padV }]}
+      >
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return <View style={[styles.container, { paddingHorizontal: padH, paddingVertical: padV }]}>{content}</View>;
 }
 
 const styles = StyleSheet.create({

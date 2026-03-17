@@ -151,7 +151,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     set({ isThreadsLoading: true });
     try {
       const { data } = await api.get(`/threads?community_id=${communityId}`);
-      set({ threads: data.threads });
+      set({ threads: (data.threads ?? []).map(normalizeThread) });
     } finally {
       set({ isThreadsLoading: false });
     }
@@ -159,7 +159,10 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
 
   fetchThread: async (threadId) => {
     const { data } = await api.get(`/threads/${threadId}`);
-    set({ activeThread: data.thread });
+    set({
+      activeThread: normalizeThread(data.thread),
+      replies: (data.replies ?? []).map(normalizeReply),
+    });
   },
 
   createThread: async (communityId, threadData) => {
@@ -168,6 +171,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   upvoteThread: async (threadId) => {
+    const activeThread = get().activeThread;
     set({
       threads: get().threads.map((t) =>
         t.id === threadId
@@ -178,36 +182,39 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
             }
           : t
       ),
+      activeThread:
+        activeThread && activeThread.id === threadId
+          ? {
+              ...activeThread,
+              user_upvoted: !activeThread.user_upvoted,
+              upvotes: activeThread.upvotes + (activeThread.user_upvoted ? -1 : 1),
+            }
+          : activeThread,
     });
-    await api.post(`/threads/${threadId}/vote`);
+    await api.post(`/threads/${threadId}/vote`, { is_upvote: true });
   },
 
   fetchReplies: async (threadId) => {
-    const { data } = await api.get(`/threads/${threadId}/replies`);
-    set({ replies: data.replies });
+    const { data } = await api.get(`/threads/${threadId}`);
+    set({ replies: (data.replies ?? []).map(normalizeReply) });
   },
 
   createReply: async (threadId, content, parentId) => {
     await api.post(`/threads/${threadId}/replies`, {
       content,
-      parent_reply_id: parentId,
+      parent_id: parentId,
     });
     await get().fetchReplies(threadId);
   },
 
   upvoteReply: async (replyId) => {
+    const replies = get().replies;
+    const threadId = findReplyThreadId(replies, replyId);
+    if (!threadId) return;
     set({
-      replies: get().replies.map((r) =>
-        r.id === replyId
-          ? {
-              ...r,
-              user_upvoted: !r.user_upvoted,
-              upvotes: r.upvotes + (r.user_upvoted ? -1 : 1),
-            }
-          : r
-      ),
+      replies: toggleReplyVote(replies, replyId),
     });
-    await api.post(`/replies/${replyId}/upvote`);
+    await api.post(`/threads/${threadId}/vote`, { is_upvote: true, reply_id: replyId });
   },
 
   fetchChatHistory: async (communityId) => {
@@ -247,3 +254,60 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     });
   },
 }));
+
+function normalizeThread(thread: any): Thread {
+  return {
+    ...thread,
+    upvotes: Number(thread.upvotes ?? thread.upvote_count ?? 0),
+    user_upvoted: Boolean(thread.user_upvoted ?? thread.user_voted),
+    reply_count: Number(thread.reply_count ?? 0),
+  };
+}
+
+function normalizeReply(reply: any): ThreadReply {
+  return {
+    ...reply,
+    upvotes: Number(reply.upvotes ?? reply.upvote_count ?? 0),
+    user_upvoted: Boolean(reply.user_upvoted ?? reply.user_voted),
+    parent_reply_id: reply.parent_reply_id ?? reply.parent_id ?? undefined,
+    children: Array.isArray(reply.children) ? reply.children.map(normalizeReply) : [],
+  };
+}
+
+function toggleReplyVote(replies: ThreadReply[], replyId: number): ThreadReply[] {
+  return replies.map((reply) => {
+    if (reply.id === replyId) {
+      return {
+        ...reply,
+        user_upvoted: !reply.user_upvoted,
+        upvotes: reply.upvotes + (reply.user_upvoted ? -1 : 1),
+      };
+    }
+
+    if (reply.children?.length) {
+      return {
+        ...reply,
+        children: toggleReplyVote(reply.children, replyId),
+      };
+    }
+
+    return reply;
+  });
+}
+
+function findReplyThreadId(replies: ThreadReply[], replyId: number): number | null {
+  for (const reply of replies) {
+    if (reply.id === replyId) {
+      return reply.thread_id;
+    }
+
+    if (reply.children?.length) {
+      const nested = findReplyThreadId(reply.children, replyId);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return null;
+}
