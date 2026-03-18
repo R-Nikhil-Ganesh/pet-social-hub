@@ -55,6 +55,8 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
+  const isProfessional = Boolean(user.is_professional);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -81,13 +83,13 @@ export default function ProfileScreen() {
           <Avatar
             uri={user.avatar_url}
             size={84}
-            isProfessional={user.is_professional}
+            isProfessional={isProfessional}
             style={styles.heroAvatar}
           />
           <View style={styles.heroInfo}>
             <ThemedText style={styles.displayName}>{user.display_name}</ThemedText>
             <ThemedText style={styles.username}>@{user.username}</ThemedText>
-            {user.is_professional && (
+            {isProfessional && (
               <View style={styles.proBadge}>
                 <ThemedText style={styles.proText}>
                   ✓ {user.professional_type ?? 'Professional'}

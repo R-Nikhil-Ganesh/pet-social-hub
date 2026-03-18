@@ -84,14 +84,14 @@ export default function RegisterScreen() {
     }
   };
 
-  const fields: Array<{
+  const fields: {
     key: keyof typeof form;
     label: string;
     placeholder: string;
     secure?: boolean;
     keyboard?: 'default' | 'email-address';
     autoCapitalize?: 'none' | 'words';
-  }> = [
+  }[] = [
     { key: 'display_name', label: 'Display Name', placeholder: 'Luna & Mochi', autoCapitalize: 'words' },
     { key: 'username', label: 'Username', placeholder: 'lunamochi', autoCapitalize: 'none' },
     { key: 'email', label: 'Email', placeholder: 'you@example.com', keyboard: 'email-address', autoCapitalize: 'none' },

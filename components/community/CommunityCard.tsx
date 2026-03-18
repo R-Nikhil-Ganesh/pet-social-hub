@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Community } from '@/store/communityStore';
@@ -11,6 +11,13 @@ interface CommunityCardProps {
 
 export function CommunityCard({ community, onJoin }: CommunityCardProps) {
   const router = useRouter();
+  const [imageFailed, setImageFailed] = useState(false);
+  const fallbackLabel = useMemo(() => {
+    const words = community.name.split(/\s+/).filter(Boolean).slice(0, 2);
+    return words.map((word) => word[0]?.toUpperCase() ?? '').join('') || 'P';
+  }, [community.name]);
+  const canShowImage = Boolean(community.icon_url) && !imageFailed;
+  const safeEmoji = community.icon_emoji && !/^\?+$/.test(community.icon_emoji) ? community.icon_emoji : '';
 
   return (
     <TouchableOpacity
@@ -19,7 +26,18 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
       activeOpacity={0.85}
     >
       <View style={styles.iconWrapper}>
-        <ThemedText style={styles.icon}>{community.icon_emoji}</ThemedText>
+        {canShowImage ? (
+          <Image
+            source={{ uri: community.icon_url }}
+            style={styles.iconImage}
+            resizeMode="cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : safeEmoji ? (
+          <ThemedText style={styles.icon}>{safeEmoji}</ThemedText>
+        ) : (
+          <ThemedText style={styles.iconFallback}>{fallbackLabel}</ThemedText>
+        )}
       </View>
 
       <View style={styles.info}>
@@ -79,9 +97,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  iconImage: {
+    width: '100%',
+    height: '100%',
   },
   icon: {
     fontSize: 26,
+  },
+  iconFallback: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#5B21B6',
   },
   info: {
     flex: 1,

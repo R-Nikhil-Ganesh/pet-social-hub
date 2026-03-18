@@ -15,9 +15,9 @@ import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PetTag } from '@/components/ui/PetTag';
 import { PostCard } from '@/components/feed/PostCard';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore , User } from '@/store/authStore';
 import api from '@/services/api';
-import { User } from '@/store/authStore';
+
 import { Post } from '@/store/feedStore';
 
 export default function UserProfileScreen() {

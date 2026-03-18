@@ -8,6 +8,7 @@ export interface Community {
   type: 'breed' | 'topic' | 'local';
   cover_url?: string;
   icon_emoji: string;
+  icon_url?: string;
   member_count: number;
   is_member: boolean;
   is_default: boolean;
@@ -58,9 +59,16 @@ export interface ChatMessage {
   sender_avatar: string;
   type: 'text' | 'image' | 'sticker' | 'gif' | 'reply';
   content: string;
+  media_url?: string;
   reply_to?: string;
   reply_preview?: string;
-  reactions: { emoji: string; count: number; user_reacted: boolean }[];
+  reactions: {
+    emoji: string;
+    count: number;
+    user_reacted: boolean;
+    user_ids?: number[];
+    users?: { id: number; username: string; display_name: string; is_self?: boolean }[];
+  }[];
   created_at: string;
 }
 
@@ -93,7 +101,22 @@ interface CommunityState {
 
   fetchChatHistory: (communityId: number) => Promise<void>;
   addChatMessage: (message: ChatMessage) => void;
-  updateMessageReaction: (messageId: string, emoji: string) => void;
+  updateMessageReaction: (
+    messageId: string,
+    emoji: string,
+    currentUser?: { id: number; username?: string; display_name?: string }
+  ) => void;
+  applyServerMessageReactions: (
+    messageId: string,
+    reactions: {
+      emoji: string;
+      count: number;
+      user_ids?: number[];
+      user_reacted?: boolean;
+      users?: { id: number; username: string; display_name: string; is_self?: boolean }[];
+    }[],
+    currentUserId?: number
+  ) => void;
 }
 
 export const useCommunityStore = create<CommunityState>((set, get) => ({
@@ -218,36 +241,46 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   fetchChatHistory: async (communityId) => {
+    if (!Number.isFinite(communityId) || communityId <= 0) {
+      set({ chatMessages: [], isChatLoading: false });
+      return;
+    }
+
     set({ isChatLoading: true });
     try {
       const { data } = await api.get(`/chat/${communityId}`);
-      set({ chatMessages: data.messages });
+      set({ chatMessages: data.messages.map(normalizeChatMessage) });
+    } catch {
+      set({ chatMessages: [] });
     } finally {
       set({ isChatLoading: false });
     }
   },
 
   addChatMessage: (message) => {
-    set({ chatMessages: [...get().chatMessages, message] });
+    set({ chatMessages: [...get().chatMessages, normalizeChatMessage(message)] });
   },
 
-  updateMessageReaction: (messageId, emoji) => {
+  updateMessageReaction: (messageId, emoji, currentUser) => {
     set({
       chatMessages: get().chatMessages.map((m) =>
         m._id === messageId
           ? {
               ...m,
-              reactions: m.reactions.some((r) => r.emoji === emoji)
-                ? m.reactions.map((r) =>
-                    r.emoji === emoji
-                      ? {
-                          ...r,
-                          count: r.user_reacted ? r.count - 1 : r.count + 1,
-                          user_reacted: !r.user_reacted,
-                        }
-                      : r
-                  )
-                : [...m.reactions, { emoji, count: 1, user_reacted: true }],
+              reactions: applySingleUserReactionOptimistic(m.reactions, emoji, currentUser),
+            }
+          : m
+      ),
+    });
+  },
+
+  applyServerMessageReactions: (messageId, reactions, currentUserId) => {
+    set({
+      chatMessages: get().chatMessages.map((m) =>
+        m._id === messageId
+          ? {
+              ...m,
+              reactions: normalizeMessageReactionsForUser(reactions, currentUserId),
             }
           : m
       ),
@@ -310,4 +343,147 @@ function findReplyThreadId(replies: ThreadReply[], replyId: number): number | nu
   }
 
   return null;
+}
+
+function normalizeChatMessage(msg: any): ChatMessage {
+  return {
+    ...msg,
+    _id: msg._id || msg.id,
+    created_at: msg.created_at || msg.createdAt,
+    reply_to: msg.reply_to ? String(msg.reply_to) : undefined,
+    reply_preview: msg.reply_preview || undefined,
+    reactions: normalizeMessageReactionsForUser(msg.reactions, undefined),
+  };
+}
+
+function normalizeMessageReactionsForUser(
+  reactions: any,
+  currentUserId: number | undefined
+): { emoji: string; count: number; user_reacted: boolean; user_ids?: number[] }[] {
+  const byEmoji = new Map<string, Set<number>>();
+
+  for (const reaction of Array.isArray(reactions) ? reactions : []) {
+    const emoji = String(reaction?.emoji || '').trim();
+    if (!emoji) continue;
+    if (!byEmoji.has(emoji)) {
+      byEmoji.set(emoji, new Set<number>());
+    }
+    const users = byEmoji.get(emoji)!;
+
+    if (Array.isArray(reaction.user_ids)) {
+      reaction.user_ids.forEach((id: any) => {
+        const n = Number(id);
+        if (Number.isFinite(n)) users.add(n);
+      });
+    } else if (Number.isFinite(Number(reaction.user_id))) {
+      users.add(Number(reaction.user_id));
+    }
+  }
+
+  return Array.from(byEmoji.entries()).map(([emoji, users]) => {
+    const userIds = Array.from(users);
+    const usersFromPayload = (Array.isArray(reactions) ? reactions : [])
+      .filter((r: any) => String(r?.emoji || '').trim() === emoji)
+      .flatMap((r: any) => (Array.isArray(r?.users) ? r.users : []));
+
+    const usersMap = new Map<number, { id: number; username: string; display_name: string; is_self?: boolean }>();
+    usersFromPayload.forEach((u: any) => {
+      const id = Number(u?.id);
+      if (!Number.isFinite(id)) return;
+      usersMap.set(id, {
+        id,
+        username: String(u?.username || `user${id}`),
+        display_name: String(u?.display_name || u?.username || `User ${id}`),
+        is_self: Boolean(u?.is_self),
+      });
+    });
+
+    return {
+      emoji,
+      count: userIds.length,
+      user_reacted:
+        currentUserId != null ? userIds.includes(Number(currentUserId)) : Boolean(false),
+      user_ids: userIds,
+      users: userIds.map((id) =>
+        usersMap.get(id) || {
+          id,
+          username: `user${id}`,
+          display_name: `User ${id}`,
+          is_self: currentUserId != null ? id === Number(currentUserId) : false,
+        }
+      ),
+    };
+  });
+}
+
+function applySingleUserReactionOptimistic(
+  reactions: ChatMessage['reactions'],
+  emoji: string,
+  currentUser?: { id: number; username?: string; display_name?: string }
+): ChatMessage['reactions'] {
+  const userId = Number(currentUser?.id);
+  const hasUser = Number.isFinite(userId);
+
+  const cleared = reactions
+    .map((reaction) => {
+      if (!reaction.user_reacted || !hasUser) return reaction;
+      const nextUserIds = (reaction.user_ids || []).filter((id) => Number(id) !== userId);
+      const nextUsers = (reaction.users || []).filter((u) => Number(u.id) !== userId);
+      return {
+        ...reaction,
+        count: Math.max(0, reaction.count - 1),
+        user_reacted: false,
+        user_ids: nextUserIds,
+        users: nextUsers,
+      };
+    })
+    .filter((reaction) => reaction.count > 0);
+
+  const existingIndex = cleared.findIndex((reaction) => reaction.emoji === emoji);
+  if (existingIndex >= 0) {
+    const existing = cleared[existingIndex];
+    const nextUserIds = hasUser
+      ? [...new Set([...(existing.user_ids || []), userId])]
+      : existing.user_ids;
+    const nextUsers = hasUser
+      ? [
+          ...(existing.users || []).filter((u) => Number(u.id) !== userId),
+          {
+            id: userId,
+            username: currentUser?.username || `user${userId}`,
+            display_name: currentUser?.display_name || currentUser?.username || `User ${userId}`,
+            is_self: true,
+          },
+        ]
+      : existing.users;
+
+    cleared[existingIndex] = {
+      ...existing,
+      count: hasUser ? nextUserIds.length : Math.max(1, existing.count),
+      user_reacted: hasUser ? true : existing.user_reacted,
+      user_ids: nextUserIds,
+      users: nextUsers,
+    };
+    return cleared;
+  }
+
+  return [
+    ...cleared,
+    {
+      emoji,
+      count: 1,
+      user_reacted: true,
+      user_ids: hasUser ? [userId] : [],
+      users: hasUser
+        ? [
+            {
+              id: userId,
+              username: currentUser?.username || `user${userId}`,
+              display_name: currentUser?.display_name || currentUser?.username || `User ${userId}`,
+              is_self: true,
+            },
+          ]
+        : [],
+    },
+  ];
 }
