@@ -11,8 +11,10 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThreadItem } from '@/components/community/ThreadItem';
 import { ChatBubble } from '@/components/community/ChatBubble';
@@ -53,6 +55,7 @@ export default function CommunityDetailScreen() {
   const [threadTitle, setThreadTitle] = useState('');
   const [threadContent, setThreadContent] = useState('');
   const [threadFlair, setThreadFlair] = useState<string>('discussion');
+  const [threadMediaUri, setThreadMediaUri] = useState<string | null>(null);
   const [isCreatingThread, setIsCreatingThread] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -149,20 +152,56 @@ export default function CommunityDetailScreen() {
 
     setIsCreatingThread(true);
     try {
-      await createThread(communityId, {
-        title: threadTitle.trim(),
-        content: threadContent.trim(),
-        flair: threadFlair,
-      });
+      if (threadMediaUri) {
+        const form = new FormData() as any;
+        form.append('title', threadTitle.trim());
+        form.append('content', threadContent.trim());
+        form.append('flair', threadFlair);
+        if (Platform.OS === 'web') {
+          const response = await fetch(threadMediaUri);
+          const blob = await response.blob();
+          form.append('media', blob, 'thread-image.jpg');
+        } else {
+          const fileName = threadMediaUri.split('/').pop() ?? 'thread-image.jpg';
+          form.append('media', { uri: threadMediaUri, name: fileName, type: 'image/jpeg' } as any);
+        }
+        await createThread(communityId, form);
+      } else {
+        await createThread(communityId, {
+          title: threadTitle.trim(),
+          content: threadContent.trim(),
+          flair: threadFlair,
+        });
+      }
 
       setThreadTitle('');
       setThreadContent('');
       setThreadFlair('discussion');
+      setThreadMediaUri(null);
       setShowThreadComposer(false);
     } catch {
       Alert.alert('Error', 'Could not create thread. Please try again.');
     } finally {
       setIsCreatingThread(false);
+    }
+  };
+
+  const pickThreadMedia = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Allow photo library access to add an image.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setThreadMediaUri(result.assets[0].uri);
     }
   };
 
@@ -198,7 +237,7 @@ export default function CommunityDetailScreen() {
                 style={styles.newThreadBtn}
                 onPress={() => setShowThreadComposer(true)}
               >
-                <ThemedText style={styles.newThreadBtnText}>+ Start New Thread</ThemedText>
+                <ThemedText style={styles.newThreadBtnText}>Start new thread</ThemedText>
               </TouchableOpacity>
             }
             ListEmptyComponent={
@@ -316,6 +355,19 @@ export default function CommunityDetailScreen() {
               maxLength={2000}
             />
 
+            {threadMediaUri ? (
+              <View style={styles.threadMediaPreviewWrap}>
+                <Image source={{ uri: threadMediaUri }} style={styles.threadMediaPreview} />
+                <TouchableOpacity style={styles.removeThreadMediaBtn} onPress={() => setThreadMediaUri(null)}>
+                  <ThemedText style={styles.removeThreadMediaText}>✕</ThemedText>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.addThreadImageBtn} onPress={pickThreadMedia}>
+                <ThemedText style={styles.addThreadImageText}>+ Add image</ThemedText>
+              </TouchableOpacity>
+            )}
+
             <View style={styles.flairRow}>
               {threadFlairs.map((flair) => (
                 <TouchableOpacity
@@ -372,16 +424,20 @@ const styles = StyleSheet.create({
   tabTextActive: { color: '#fff' },
   loader: { marginTop: 40 },
   newThreadBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 10,
+    alignSelf: 'flex-end',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D4D4D8',
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     alignItems: 'center',
     marginBottom: 10,
   },
   newThreadBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    color: '#52525B',
+    fontSize: 12,
+    fontWeight: '600',
   },
   listContent: { padding: 12 },
   chatContainer: { flex: 1 },
@@ -496,6 +552,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 90,
     textAlignVertical: 'top',
+  },
+  addThreadImageBtn: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    backgroundColor: '#F5F3FF',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  addThreadImageText: {
+    fontSize: 12,
+    color: '#6D28D9',
+    fontWeight: '700',
+  },
+  threadMediaPreviewWrap: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  threadMediaPreview: {
+    width: '100%',
+    height: 170,
+  },
+  removeThreadMediaBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeThreadMediaText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   flairRow: {
     flexDirection: 'row',

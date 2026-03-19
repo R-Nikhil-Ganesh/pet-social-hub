@@ -92,7 +92,7 @@ interface CommunityState {
 
   fetchThreads: (communityId: number) => Promise<void>;
   fetchThread: (threadId: number) => Promise<void>;
-  createThread: (communityId: number, data: Partial<Thread>) => Promise<void>;
+  createThread: (communityId: number, data: Partial<Thread> | FormData) => Promise<void>;
   upvoteThread: (threadId: number) => Promise<void>;
 
   fetchReplies: (threadId: number) => Promise<void>;
@@ -189,7 +189,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   createThread: async (communityId, threadData) => {
-    await api.post(`/threads`, { ...threadData, community_id: communityId });
+    if (typeof FormData !== 'undefined' && threadData instanceof FormData) {
+      threadData.append('community_id', String(communityId));
+      await api.post(`/threads`, threadData);
+    } else {
+      await api.post(`/threads`, { ...threadData, community_id: communityId });
+    }
     await get().fetchThreads(communityId);
   },
 

@@ -6,6 +6,7 @@ import { TriviaGame } from '@/components/games/TriviaGame';
 import { useGameStore } from '@/store/gameStore';
 import { useAuthStore } from '@/store/authStore';
 import { getSocket } from '@/services/socket';
+import api from '@/services/api';
 
 export default function TriviaScreen() {
   const router = useRouter();
@@ -16,10 +17,10 @@ export default function TriviaScreen() {
     joinTriviaQueue,
     leaveTriviaQueue,
     setSession,
+    advanceSessionQuestion,
     updateSessionScore,
     endSession,
   } = useGameStore();
-  const isMatchmaking = useGameStore((s) => s.isMatchmaking);
 
   useEffect(() => {
     if (!token) return;
@@ -40,8 +41,10 @@ export default function TriviaScreen() {
     });
 
     socket.on('game:score', (data: { user_id: number; score: number }) => {
+      const current = useGameStore.getState().currentSession;
+      if (!current) return;
       if (data.user_id !== user?.id) {
-          updateSessionScore(session?.myScore ?? 0, data.score);
+        updateSessionScore(current.myScore, data.score);
       }
     });
 
@@ -50,34 +53,63 @@ export default function TriviaScreen() {
     });
 
     // Join the matchmaking queue when screen mounts
-      joinTriviaQueue();
+    joinTriviaQueue();
 
     return () => {
       socket.off('game:start');
       socket.off('game:score');
       socket.off('game:end');
-        if (!session || session?.status === 'waiting') {
-          leaveTriviaQueue();
+      if (!useGameStore.getState().currentSession || useGameStore.getState().currentSession?.status === 'waiting') {
+        leaveTriviaQueue();
       }
     };
-  }, [token]);
+  }, [token, user?.id, endSession, joinTriviaQueue, leaveTriviaQueue, setSession, updateSessionScore]);
 
-  const handleAnswer = (questionIndex: number, choiceIndex: number) => {
+  const handleAnswer = async (questionIndex: number, choiceIndex: number) => {
     if (!token || !session) return;
     const socket = getSocket(token);
-    const question = session.questions[questionIndex];
+    const question = session.questions?.[questionIndex];
+    if (!question) return;
     const isCorrect = choiceIndex === question.correct_index;
 
+    let newMyScore = session.myScore;
+
     if (isCorrect) {
-      const newScore = session.myScore + 100;
-        updateSessionScore(newScore, session.opponentScore);
+      newMyScore = session.myScore + 100;
+      updateSessionScore(newMyScore, session.opponentScore);
       socket.emit('game:answer', {
         session_id: session.id,
         question_index: questionIndex,
         choice_index: choiceIndex,
-        score: newScore,
+        score: newMyScore,
       });
     }
+
+    const totalQuestions = session.questions?.length ?? 0;
+    const isLastQuestion = questionIndex >= totalQuestions - 1;
+
+    if (isLastQuestion) {
+      const winnerId =
+        newMyScore > session.opponentScore
+          ? user?.id ?? null
+          : newMyScore < session.opponentScore
+            ? session.opponent?.id ?? null
+            : null;
+
+      try {
+        await api.post(`/games/trivia/${session.id}/end`, {
+          winner_id: winnerId,
+        });
+      } catch {
+        // Ignore end-record failures to avoid blocking session completion in UI.
+      }
+      endSession(winnerId);
+      return;
+    }
+
+    setTimeout(() => {
+      advanceSessionQuestion();
+    }, 500);
   };
 
   const handleLeaveQueue = () => {
@@ -99,7 +131,7 @@ export default function TriviaScreen() {
         </View>
       )}
       <TriviaGame
-        session={session ?? { id: 0, mode: 'trivia', status: 'waiting', questions: [], currentQuestion: 0, myScore: 0, opponentScore: 0, opponent: null, winner_id: null }}
+        session={session ?? { id: 0, mode: 'trivia', status: 'waiting', questions: [], currentQuestion: 0, myScore: 0, opponentScore: 0, opponent: undefined, winner_id: null }}
         onAnswer={handleAnswer}
         onLeave={handleLeaveQueue}
       />

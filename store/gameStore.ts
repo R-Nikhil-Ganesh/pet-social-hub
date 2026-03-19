@@ -4,7 +4,7 @@ import api from '../services/api';
 export type GameMode = 'trivia' | 'photo_contest' | 'training' | 'breed_guess';
 
 export interface GameSession {
-  id: string;
+  id: number;
   mode: GameMode;
   opponent?: {
     id: number;
@@ -17,7 +17,7 @@ export interface GameSession {
   myScore: number;
   opponentScore: number;
   status: 'waiting' | 'active' | 'finished';
-  winner_id?: number;
+  winner_id?: number | null;
 }
 
 export interface TriviaQuestion {
@@ -90,8 +90,9 @@ interface GameState {
   joinTriviaQueue: () => Promise<void>;
   leaveTriviaQueue: () => void;
   setSession: (session: GameSession) => void;
+  advanceSessionQuestion: () => void;
   updateSessionScore: (myScore: number, opponentScore: number) => void;
-  endSession: (winnerId: number) => void;
+  endSession: (winnerId: number | null) => void;
   clearSession: () => void;
 
   fetchPhotoContest: () => Promise<void>;
@@ -127,6 +128,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setSession: (session) => set({ currentSession: session, isMatchmaking: false }),
+
+  advanceSessionQuestion: () => {
+    const session = get().currentSession;
+    if (!session || session.status !== 'active') return;
+    const questionCount = session.questions?.length ?? 0;
+    if (questionCount === 0) return;
+    const nextQuestion = Math.min(session.currentQuestion + 1, questionCount - 1);
+    set({ currentSession: { ...session, currentQuestion: nextQuestion } });
+  },
 
   updateSessionScore: (myScore, opponentScore) => {
     const session = get().currentSession;
@@ -174,6 +184,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   voteContest: async (entryId) => {
     const contest = get().activeContest;
     if (!contest) return;
+    const { data } = await api.post(`/games/photo-contest/vote/${entryId}`);
     set({
       activeContest: {
         ...contest,
@@ -181,14 +192,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           e.id === entryId
             ? {
                 ...e,
-                user_voted: !e.user_voted,
-                votes: e.votes + (e.user_voted ? -1 : 1),
+                user_voted: Boolean(data.voted),
+                votes: Number(data.votes ?? e.votes),
               }
             : e
         ),
       },
     });
-    await api.post(`/games/photo-contest/vote/${entryId}`);
   },
 
   fetchChallenges: async () => {

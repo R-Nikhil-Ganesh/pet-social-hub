@@ -14,7 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 
 interface TriviaGameProps {
   session: GameSession;
-  onAnswer: (questionId: number, answerIndex: number) => void;
+  onAnswer: (questionIndex: number, answerIndex: number) => void;
   onLeave: () => void;
 }
 
@@ -58,7 +58,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
     if (answered !== null || !question) return;
     setAnswered(index);
     if (timerRef.current) clearInterval(timerRef.current);
-    onAnswer(question.id, index);
+    onAnswer(session.currentQuestion, index);
   };
 
   if (session.status === 'waiting') {
@@ -92,7 +92,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
             <ThemedText style={styles.scoreValue}>{session.opponentScore}</ThemedText>
           </View>
         </View>
-        {won && <PointsBadge points={50} size="lg" showLabel />}
+        {won && <PointsBadge points={100} size="lg" showLabel />}
         <TouchableOpacity style={styles.doneBtn} onPress={onLeave}>
           <ThemedText style={styles.doneBtnText}>Done</ThemedText>
         </TouchableOpacity>

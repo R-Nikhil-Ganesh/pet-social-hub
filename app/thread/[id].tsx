@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -145,6 +146,9 @@ export default function ThreadDetailScreen() {
               </View>
               <ThemedText style={styles.threadTitle}>{activeThread.title}</ThemedText>
               <ThemedText style={styles.threadContent}>{activeThread.content}</ThemedText>
+              {activeThread.media_url ? (
+                <Image source={{ uri: activeThread.media_url }} style={styles.threadImage} resizeMode="cover" />
+              ) : null}
               <ThemedText style={styles.repliesLabel}>
                 💬 {activeThread.reply_count} replies
               </ThemedText>
@@ -226,6 +230,11 @@ const styles = StyleSheet.create({
   upvoteActive: { color: '#7C3AED' },
   threadTitle: { fontSize: 18, fontWeight: '800', color: '#18181B', lineHeight: 24 },
   threadContent: { fontSize: 14, color: '#27272A', lineHeight: 21 },
+  threadImage: {
+    width: '100%',
+    height: 190,
+    borderRadius: 12,
+  },
   repliesLabel: { fontSize: 13, color: '#71717A', fontWeight: '500' },
   replyContainer: {
     backgroundColor: '#fff',

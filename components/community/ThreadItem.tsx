@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
@@ -78,6 +78,10 @@ export function ThreadItem({ thread }: ThreadItemProps) {
         <ThemedText style={styles.preview} numberOfLines={2}>
           {thread.content}
         </ThemedText>
+
+        {thread.media_url ? (
+          <Image source={{ uri: thread.media_url }} style={styles.threadImage} resizeMode="cover" />
+        ) : null}
 
         <View style={styles.bottomRow}>
           <Avatar uri={thread.avatar_url} size={18} />
@@ -178,6 +182,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#52525B',
     lineHeight: 18,
+  },
+  threadImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
   },
   bottomRow: {
     flexDirection: 'row',
