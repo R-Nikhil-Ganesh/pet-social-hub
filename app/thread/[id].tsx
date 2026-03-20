@@ -12,7 +12,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { useCommunityStore, ThreadReply } from '@/store/communityStore';
@@ -22,9 +22,10 @@ interface ReplyRowProps {
   reply: ThreadReply;
   depth?: number;
   onReply: (replyId: number, username: string) => void;
+  onUserPress: (userId: number) => void;
 }
 
-function ReplyRow({ reply, depth = 0, onReply }: ReplyRowProps) {
+function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
   const upvoteReply = useCommunityStore((s) => s.upvoteReply);
 
   const timeAgo = (date: string) => {
@@ -39,8 +40,12 @@ function ReplyRow({ reply, depth = 0, onReply }: ReplyRowProps) {
   return (
     <View style={[styles.replyContainer, { marginLeft: depth * 20 }]}>
       <View style={styles.replyHeader}>
-        <Avatar uri={reply.avatar_url} size={28} isProfessional={reply.is_professional} />
-        <ThemedText style={styles.replyAuthor}>{reply.display_name}</ThemedText>
+        <TouchableOpacity onPress={() => onUserPress(reply.user_id)} activeOpacity={0.8}>
+          <Avatar uri={reply.avatar_url} size={28} isProfessional={reply.is_professional} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onUserPress(reply.user_id)} activeOpacity={0.8}>
+          <ThemedText style={styles.replyAuthor}>{reply.display_name}</ThemedText>
+        </TouchableOpacity>
         <ThemedText style={styles.replyTime}>{timeAgo(reply.created_at)}</ThemedText>
       </View>
       <ThemedText style={styles.replyContent}>{reply.content}</ThemedText>
@@ -58,7 +63,13 @@ function ReplyRow({ reply, depth = 0, onReply }: ReplyRowProps) {
         </TouchableOpacity>
       </View>
       {reply.children?.map((child) => (
-        <ReplyRow key={child.id} reply={child} depth={depth + 1} onReply={onReply} />
+        <ReplyRow
+          key={child.id}
+          reply={child}
+          depth={depth + 1}
+          onReply={onReply}
+          onUserPress={onUserPress}
+        />
       ))}
     </View>
   );
@@ -66,6 +77,7 @@ function ReplyRow({ reply, depth = 0, onReply }: ReplyRowProps) {
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const threadId = Number(id);
   const user = useAuthStore((s) => s.user);
 
@@ -97,6 +109,11 @@ export default function ThreadDetailScreen() {
     setReplyingTo({ id: replyId, username });
   };
 
+  const goToUserProfile = (userId: number) => {
+    if (!Number.isFinite(userId) || userId <= 0) return;
+    router.push(`/user/${userId}`);
+  };
+
   if (!activeThread) {
     return (
       <View style={styles.loadingContainer}>
@@ -118,21 +135,25 @@ export default function ThreadDetailScreen() {
           data={topLevelReplies}
           keyExtractor={(item) => `reply-${item.id}`}
           renderItem={({ item }) => (
-            <ReplyRow reply={item} onReply={handleSetReply} />
+            <ReplyRow reply={item} onReply={handleSetReply} onUserPress={goToUserProfile} />
           )}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <View style={styles.threadCard}>
               {/* Thread OP */}
               <View style={styles.opHeader}>
-                <Avatar
-                  uri={activeThread.avatar_url}
-                  size={40}
-                  isProfessional={activeThread.is_professional}
-                />
+                <TouchableOpacity onPress={() => goToUserProfile(activeThread.user_id)} activeOpacity={0.8}>
+                  <Avatar
+                    uri={activeThread.avatar_url}
+                    size={40}
+                    isProfessional={activeThread.is_professional}
+                  />
+                </TouchableOpacity>
                 <View style={styles.opMeta}>
-                  <ThemedText style={styles.opName}>{activeThread.display_name}</ThemedText>
-                  <ThemedText style={styles.opUsername}>@{activeThread.username}</ThemedText>
+                  <TouchableOpacity onPress={() => goToUserProfile(activeThread.user_id)} activeOpacity={0.8}>
+                    <ThemedText style={styles.opName}>{activeThread.display_name}</ThemedText>
+                    <ThemedText style={styles.opUsername}>@{activeThread.username}</ThemedText>
+                  </TouchableOpacity>
                 </View>
                 <TouchableOpacity onPress={() => upvoteThread(activeThread.id)}>
                   <View style={[styles.upvoteBtn, activeThread.user_upvoted && styles.upvotedBtn]}>

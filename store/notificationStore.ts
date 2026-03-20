@@ -5,7 +5,7 @@ export interface NotificationItem {
   id: number;
   user_id: number;
   actor_id: number | null;
-  type: 'like' | 'comment';
+  type: 'like' | 'comment' | 'follow' | 'game_invite' | 'reply' | 'mention';
   ref_id: number | null;
   ref_type: string | null;
   is_read: boolean;
@@ -20,6 +20,15 @@ export interface NotificationItem {
     id: number;
     caption?: string;
     media_url?: string;
+  } | null;
+  event_group_request: {
+    id: number;
+    group_id: number;
+    status: 'pending' | 'accepted' | 'declined';
+    event_id: string;
+    event_title: string;
+    group_name: string;
+    community_id: number | null;
   } | null;
 }
 

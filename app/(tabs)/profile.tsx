@@ -109,15 +109,27 @@ export default function ProfileScreen() {
             <ThemedText style={styles.statLabel}>Posts</ThemedText>
           </View>
           <View style={styles.statDivider} />
-          <View style={styles.statBlock}>
+          <TouchableOpacity
+            style={styles.statBlock}
+            onPress={() =>
+              router.push({ pathname: '/followers/[id]', params: { id: String(user.id) } } as never)
+            }
+            activeOpacity={0.8}
+          >
             <ThemedText style={styles.statValue}>{user.follower_count}</ThemedText>
             <ThemedText style={styles.statLabel}>Followers</ThemedText>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statBlock}>
+          <TouchableOpacity
+            style={styles.statBlock}
+            onPress={() =>
+              router.push({ pathname: '/following/[id]', params: { id: String(user.id) } } as never)
+            }
+            activeOpacity={0.8}
+          >
             <ThemedText style={styles.statValue}>{user.following_count}</ThemedText>
             <ThemedText style={styles.statLabel}>Following</ThemedText>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
           <TouchableOpacity style={styles.statBlock} onPress={() => router.push('/rewards')}>
             <PointsBadge points={totalPoints} size="sm" />

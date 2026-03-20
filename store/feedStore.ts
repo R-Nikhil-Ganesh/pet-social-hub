@@ -40,50 +40,107 @@ export interface Story {
   viewed: boolean;
 }
 
-export interface HotTake {
+export interface EventItem {
   id: number;
-  user_id: number;
+  title: string;
+  description: string;
+  location_name: string;
+  starts_at: string;
+  cover_url?: string;
+  created_groups: {
+    id: number;
+    name: string;
+    created_at: string;
+    community_id: number | null;
+    member_count: number;
+    members: {
+      id: number;
+      display_name: string;
+      avatar_url?: string;
+    }[];
+  }[];
+  joined_groups: {
+    id: number;
+    name: string;
+    created_at: string;
+    community_id: number | null;
+    member_count: number;
+    members: {
+      id: number;
+      display_name: string;
+      avatar_url?: string;
+    }[];
+  }[];
+}
+
+export interface ConnectionUser {
+  id: number;
   username: string;
   display_name: string;
-  avatar_url: string;
-  pet?: PetMeta | null;
-  content: string;
-  media_url?: string;
-  upvotes: number;
-  user_upvoted: boolean;
-  flair: string;
-  comment_count: number;
+  avatar_url?: string;
+  is_follower: boolean;
+  is_following: boolean;
+}
+
+export interface EventGroupRequest {
+  id: number;
+  group_id: number;
+  invitee_id: number;
+  status: 'pending' | 'accepted' | 'declined';
   created_at: string;
+  event_id: string;
+  group_name: string;
+  event_title: string;
+  community_id: number | null;
+  creator: {
+    id: number;
+    username: string;
+    display_name: string;
+    avatar_url?: string;
+  };
 }
 
 interface FeedState {
   posts: Post[];
   stories: Story[];
-  hotTakes: HotTake[];
+  events: EventItem[];
+  connections: ConnectionUser[];
+  eventRequests: EventGroupRequest[];
   isLoadingFeed: boolean;
   isLoadingStories: boolean;
-  isLoadingHotTakes: boolean;
+  isLoadingEvents: boolean;
+  isLoadingEventRequests: boolean;
+  isCreatingEventGroup: boolean;
   page: number;
   hasMore: boolean;
-  activeTab: 'moments' | 'hotTakes';
-  setActiveTab: (tab: 'moments' | 'hotTakes') => void;
+  activeTab: 'moments' | 'events';
+  setActiveTab: (tab: 'moments' | 'events') => void;
   fetchFeed: (refresh?: boolean) => Promise<void>;
   fetchStories: () => Promise<void>;
-  fetchHotTakes: () => Promise<void>;
+  fetchEvents: () => Promise<void>;
+  fetchConnections: () => Promise<void>;
+  fetchEventRequests: () => Promise<void>;
   reactToPost: (postId: number) => Promise<void>;
-  upvoteHotTake: (hotTakeId: number) => Promise<void>;
+  createEventGroup: (eventId: number, inviteeIds: number[], groupName?: string) => Promise<void>;
+  respondToEventRequest: (
+    requestId: number,
+    action: 'accept' | 'decline'
+  ) => Promise<{ community_id?: number }>;
   createPost: (form: FormData) => Promise<void>;
   createStory: (form: FormData) => Promise<void>;
-  createHotTake: (data: { content: string; flair: string; pet_id: number }) => Promise<void>;
 }
 
 export const useFeedStore = create<FeedState>((set, get) => ({
   posts: [],
   stories: [],
-  hotTakes: [],
+  events: [],
+  connections: [],
+  eventRequests: [],
   isLoadingFeed: false,
   isLoadingStories: false,
-  isLoadingHotTakes: false,
+  isLoadingEvents: false,
+  isLoadingEventRequests: false,
+  isCreatingEventGroup: false,
   page: 1,
   hasMore: true,
   activeTab: 'moments',
@@ -119,13 +176,28 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     }
   },
 
-  fetchHotTakes: async () => {
-    set({ isLoadingHotTakes: true });
+  fetchEvents: async () => {
+    set({ isLoadingEvents: true });
     try {
-      const { data } = await api.get('/hot-takes');
-      set({ hotTakes: (data.hot_takes ?? []).map(normalizeHotTake) });
+      const { data } = await api.get('/event-groups/events');
+      set({ events: (data.events ?? []).map(normalizeEvent) });
     } finally {
-      set({ isLoadingHotTakes: false });
+      set({ isLoadingEvents: false });
+    }
+  },
+
+  fetchConnections: async () => {
+    const { data } = await api.get('/event-groups/connections');
+    set({ connections: (data.connections ?? []).map(normalizeConnection) });
+  },
+
+  fetchEventRequests: async () => {
+    set({ isLoadingEventRequests: true });
+    try {
+      const { data } = await api.get('/event-groups/requests');
+      set({ eventRequests: (data.requests ?? []).map(normalizeEventRequest) });
+    } finally {
+      set({ isLoadingEventRequests: false });
     }
   },
 
@@ -144,19 +216,26 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     await api.post(`/posts/${postId}/react`);
   },
 
-  upvoteHotTake: async (hotTakeId) => {
-    set({
-      hotTakes: get().hotTakes.map((h) =>
-        h.id === hotTakeId
-          ? {
-              ...h,
-              user_upvoted: !h.user_upvoted,
-              upvotes: h.upvotes + (h.user_upvoted ? -1 : 1),
-            }
-          : h
-      ),
-    });
-    await api.post(`/hot-takes/${hotTakeId}/upvote`);
+  createEventGroup: async (eventId, inviteeIds, groupName) => {
+    set({ isCreatingEventGroup: true });
+    try {
+      await api.post('/event-groups', {
+        event_id: eventId,
+        invitee_ids: inviteeIds,
+        name: groupName?.trim() || undefined,
+      });
+      await get().fetchEvents();
+    } finally {
+      set({ isCreatingEventGroup: false });
+    }
+  },
+
+  respondToEventRequest: async (requestId, action) => {
+    const { data } = await api.post(`/event-groups/requests/${requestId}/respond`, { action });
+    set({ eventRequests: get().eventRequests.filter((request) => request.id !== requestId) });
+    return {
+      community_id: data?.community_id,
+    };
   },
 
   createPost: async (form) => {
@@ -178,11 +257,81 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     await get().fetchStories();
   },
 
-  createHotTake: async (data) => {
-    await api.post('/hot-takes', data);
-    await get().fetchHotTakes();
-  },
 }));
+
+function normalizeEvent(event: any): EventItem {
+  return {
+    id: Number(event.id),
+    title: String(event.title || ''),
+    description: String(event.description || ''),
+    location_name: String(event.location_name || ''),
+    starts_at: String(event.starts_at || ''),
+    cover_url: event.cover_url || undefined,
+    created_groups: Array.isArray(event.created_groups)
+      ? event.created_groups.map((group: any) => ({
+          id: Number(group.id),
+          name: String(group.name || ''),
+          created_at: String(group.created_at || ''),
+          community_id: group.community_id ? Number(group.community_id) : null,
+          member_count: Number(group.member_count ?? 0),
+          members: Array.isArray(group.members)
+            ? group.members.map((member: any) => ({
+                id: Number(member.id),
+                display_name: String(member.display_name || ''),
+                avatar_url: member.avatar_url || undefined,
+              }))
+            : [],
+        }))
+      : [],
+    joined_groups: Array.isArray(event.joined_groups)
+      ? event.joined_groups.map((group: any) => ({
+          id: Number(group.id),
+          name: String(group.name || ''),
+          created_at: String(group.created_at || ''),
+          community_id: group.community_id ? Number(group.community_id) : null,
+          member_count: Number(group.member_count ?? 0),
+          members: Array.isArray(group.members)
+            ? group.members.map((member: any) => ({
+                id: Number(member.id),
+                display_name: String(member.display_name || ''),
+                avatar_url: member.avatar_url || undefined,
+              }))
+            : [],
+        }))
+      : [],
+  };
+}
+
+function normalizeConnection(connection: any): ConnectionUser {
+  return {
+    id: Number(connection.id),
+    username: String(connection.username || ''),
+    display_name: String(connection.display_name || ''),
+    avatar_url: connection.avatar_url || undefined,
+    is_follower: Boolean(connection.is_follower),
+    is_following: Boolean(connection.is_following),
+  };
+}
+
+function normalizeEventRequest(request: any): EventGroupRequest {
+  return {
+    id: Number(request.id),
+    group_id: Number(request.group_id),
+    invitee_id: Number(request.invitee_id),
+    status: request.status,
+    created_at: String(request.created_at || ''),
+    event_id: String(request.event_id || ''),
+    group_name: String(request.group_name || ''),
+    event_title: String(request.event_title || ''),
+    community_id: request.community_id ? Number(request.community_id) : null,
+    creator: {
+      id: Number(request.creator?.id),
+      username: String(request.creator?.username || ''),
+      display_name: String(request.creator?.display_name || ''),
+      avatar_url: request.creator?.avatar_url || undefined,
+    },
+  };
+}
 
 function normalizeStory(story: any): Story {
   const pet = story.pet ?? {
@@ -217,12 +366,3 @@ function normalizePost(post: any): Post {
   };
 }
 
-function normalizeHotTake(hotTake: any): HotTake {
-  return {
-    ...hotTake,
-    pet: hotTake.pet ?? null,
-    upvotes: Number(hotTake.upvotes ?? 0),
-    user_upvoted: Boolean(hotTake.user_upvoted),
-    comment_count: Number(hotTake.comment_count ?? 0),
-  };
-}

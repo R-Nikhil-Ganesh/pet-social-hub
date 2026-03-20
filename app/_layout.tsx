@@ -42,6 +42,8 @@ export default function RootLayout() {
         <Stack.Screen name="community/[id]" options={{ headerShown: true }} />
         <Stack.Screen name="thread/[id]" options={{ headerShown: true, title: 'Thread' }} />
         <Stack.Screen name="user/[id]" options={{ headerShown: true, title: 'Profile' }} />
+        <Stack.Screen name="followers/[id]" options={{ headerShown: true, title: 'Followers' }} />
+        <Stack.Screen name="following/[id]" options={{ headerShown: true, title: 'Following' }} />
         <Stack.Screen name="story/[id]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
         <Stack.Screen name="create-post" options={{ presentation: 'modal', headerShown: true, title: 'New Post' }} />
         <Stack.Screen name="create-story" options={{ presentation: 'modal', headerShown: true, title: 'New Story' }} />

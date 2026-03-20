@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, Animated, PanResponder, Modal, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { ChatMessage } from '@/store/communityStore';
@@ -13,11 +14,17 @@ interface ChatBubbleProps {
 }
 
 export function ChatBubble({ message, onLongPress, onReplyPress, onReactPress }: ChatBubbleProps) {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isOwn = message.sender_id === user?.id;
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReactionsModal, setShowReactionsModal] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
+
+  const openSenderProfile = () => {
+    if (!message.sender_id) return;
+    router.push(`/user/${message.sender_id}`);
+  };
 
   const timeLabel = new Date(message.created_at).toLocaleTimeString([], {
     hour: '2-digit',
@@ -59,11 +66,15 @@ export function ChatBubble({ message, onLongPress, onReplyPress, onReactPress }:
   return (
     <View style={[styles.container, isOwn && styles.containerOwn]}>
       {!isOwn && (
-        <Avatar uri={message.sender_avatar} size={32} style={styles.avatar} />
+        <TouchableOpacity onPress={openSenderProfile} activeOpacity={0.8}>
+          <Avatar uri={message.sender_avatar} size={32} style={styles.avatar} />
+        </TouchableOpacity>
       )}
       <View style={[styles.bubbleGroup, isOwn && styles.bubbleGroupOwn]}>
         {!isOwn && (
-          <ThemedText style={styles.senderName}>{message.sender_display_name}</ThemedText>
+          <TouchableOpacity onPress={openSenderProfile} activeOpacity={0.8}>
+            <ThemedText style={styles.senderName}>{message.sender_display_name}</ThemedText>
+          </TouchableOpacity>
         )}
 
         {/* Reply preview */}

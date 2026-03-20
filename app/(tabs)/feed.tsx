@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { PostCard } from '@/components/feed/PostCard';
 import { StoryRow } from '@/components/feed/StoryRow';
-import { HotTakesBoard } from '@/components/feed/HotTakesBoard';
+import { EventGroupsBoard } from '@/components/feed/EventGroupsBoard';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { getSocket } from '@/services/socket';
 import { useFeedStore } from '@/store/feedStore';
@@ -21,11 +21,11 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
 
-type FeedTab = 'moments' | 'hotTakes';
+type FeedTab = 'moments' | 'events';
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: 'moments', label: '📸 Moments' },
-  { key: 'hotTakes', label: '🔥 Hot Takes' },
+  { key: 'events', label: '🎉 Event Groups' },
 ];
 
 export default function FeedScreen() {
@@ -41,13 +41,15 @@ export default function FeedScreen() {
 
   const {
     posts,
-    hotTakes,
+    events,
+    connections,
     isLoadingFeed,
     activeTab,
     setActiveTab,
     fetchFeed,
     fetchStories,
-    fetchHotTakes,
+    fetchEvents,
+    fetchConnections,
   } = useFeedStore();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -55,7 +57,8 @@ export default function FeedScreen() {
   useEffect(() => {
     fetchFeed(true);
     fetchStories();
-    fetchHotTakes();
+    fetchEvents();
+    fetchConnections();
     fetchPoints();
     fetchUnreadCount();
   }, []);
@@ -86,7 +89,13 @@ export default function FeedScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchFeed(true), fetchStories(), fetchHotTakes(), fetchUnreadCount()]);
+    await Promise.all([
+      fetchFeed(true),
+      fetchStories(),
+      fetchEvents(),
+      fetchConnections(),
+      fetchUnreadCount(),
+    ]);
     setRefreshing(false);
   }, []);
 
@@ -135,8 +144,12 @@ export default function FeedScreen() {
         ))}
       </View>
 
-      {/* Hot Takes Board shown inline for that tab */}
-      {activeTab === 'hotTakes' && <HotTakesBoard hotTakes={hotTakes} />}
+      {activeTab === 'events' && (
+        <EventGroupsBoard
+          events={events}
+          connections={connections}
+        />
+      )}
     </View>
   );
 
@@ -183,7 +196,7 @@ export default function FeedScreen() {
         />
       ) : (
         <FlatList
-          key="hottakes"
+          key="events"
           data={[]}
           renderItem={null}
           ListHeaderComponent={renderHeader}

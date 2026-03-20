@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { PostCard } from '@/components/feed/PostCard';
 import { Avatar } from '@/components/ui/Avatar';
@@ -31,6 +31,7 @@ interface Comment {
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const postId = Number(id);
   const user = useAuthStore((s) => s.user);
 
@@ -106,7 +107,12 @@ export default function PostDetailScreen() {
               <Avatar uri={item.avatar_url} size={34} />
               <View style={styles.commentBody}>
                 <View style={styles.commentHeader}>
-                  <ThemedText style={styles.commentAuthor}>{item.display_name}</ThemedText>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/user/${item.user_id}`)}
+                    activeOpacity={0.8}
+                  >
+                    <ThemedText style={styles.commentAuthor}>{item.display_name}</ThemedText>
+                  </TouchableOpacity>
                   <ThemedText style={styles.commentTime}>{timeAgo(item.created_at)}</ThemedText>
                 </View>
                 <ThemedText style={styles.commentContent}>{item.content}</ThemedText>

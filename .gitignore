@@ -6,3 +6,4 @@ node_modules
 .vscode/
 expo-env.d.ts
 # @end expo-cli
+.env

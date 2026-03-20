@@ -9,7 +9,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
@@ -22,9 +22,11 @@ import { Post } from '@/store/feedStore';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const userId = Number(id);
   const selfId = useAuthStore((s) => s.user?.id);
   const navigation = useNavigation();
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const [profile, setProfile] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -60,17 +62,39 @@ export default function UserProfileScreen() {
     setFollowLoading(true);
     try {
       if (isFollowing) {
-        await api.delete(`/users/${userId}/follow`);
+        const { data } = await api.delete(`/users/${userId}/follow`);
         setIsFollowing(false);
         setProfile((p) =>
-          p ? { ...p, follower_count: p.follower_count - 1 } : p
+          p
+            ? {
+                ...p,
+                follower_count:
+                  typeof data?.target_follower_count === 'number'
+                    ? data.target_follower_count
+                    : Math.max(0, p.follower_count - 1),
+              }
+            : p
         );
+        if (typeof data?.actor_following_count === 'number') {
+          updateUser({ following_count: data.actor_following_count });
+        }
       } else {
-        await api.post(`/users/${userId}/follow`);
+        const { data } = await api.post(`/users/${userId}/follow`);
         setIsFollowing(true);
         setProfile((p) =>
-          p ? { ...p, follower_count: p.follower_count + 1 } : p
+          p
+            ? {
+                ...p,
+                follower_count:
+                  typeof data?.target_follower_count === 'number'
+                    ? data.target_follower_count
+                    : p.follower_count + 1,
+              }
+            : p
         );
+        if (typeof data?.actor_following_count === 'number') {
+          updateUser({ following_count: data.actor_following_count });
+        }
       }
     } catch {
       Alert.alert('Error', 'Could not update follow status.');
@@ -123,15 +147,23 @@ export default function UserProfileScreen() {
             <ThemedText style={styles.statLabel}>Posts</ThemedText>
           </View>
           <View style={styles.statDivider} />
-          <View style={styles.statBlock}>
+          <TouchableOpacity
+            style={styles.statBlock}
+            onPress={() => router.push({ pathname: '/followers/[id]', params: { id: String(userId) } } as never)}
+            activeOpacity={0.8}
+          >
             <ThemedText style={styles.statValue}>{profile.follower_count}</ThemedText>
             <ThemedText style={styles.statLabel}>Followers</ThemedText>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statBlock}>
+          <TouchableOpacity
+            style={styles.statBlock}
+            onPress={() => router.push({ pathname: '/following/[id]', params: { id: String(userId) } } as never)}
+            activeOpacity={0.8}
+          >
             <ThemedText style={styles.statValue}>{profile.following_count}</ThemedText>
             <ThemedText style={styles.statLabel}>Following</ThemedText>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Follow / Message buttons */}

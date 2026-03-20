@@ -85,7 +85,9 @@ export function ThreadItem({ thread }: ThreadItemProps) {
 
         <View style={styles.bottomRow}>
           <Avatar uri={thread.avatar_url} size={18} />
-          <ThemedText style={styles.author}>{thread.display_name}</ThemedText>
+          <TouchableOpacity onPress={() => router.push(`/user/${thread.user_id}`)} activeOpacity={0.8}>
+            <ThemedText style={styles.author}>{thread.display_name}</ThemedText>
+          </TouchableOpacity>
           <ThemedText style={styles.sep}>·</ThemedText>
           <ThemedText style={styles.time}>{timeAgo(thread.created_at)}</ThemedText>
           <ThemedText style={styles.sep}>·</ThemedText>
