@@ -90,6 +90,7 @@ interface GameState {
   joinTriviaQueue: () => Promise<void>;
   leaveTriviaQueue: () => void;
   setSession: (session: GameSession) => void;
+  setSessionQuestion: (questionIndex: number) => void;
   advanceSessionQuestion: () => void;
   updateSessionScore: (myScore: number, opponentScore: number) => void;
   endSession: (winnerId: number | null) => void;
@@ -128,6 +129,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setSession: (session) => set({ currentSession: session, isMatchmaking: false }),
+
+  setSessionQuestion: (questionIndex) => {
+    const session = get().currentSession;
+    if (!session || session.status !== 'active') return;
+    const maxIndex = Math.max((session.questions?.length ?? 1) - 1, 0);
+    set({
+      currentSession: {
+        ...session,
+        currentQuestion: Math.max(0, Math.min(questionIndex, maxIndex)),
+      },
+    });
+  },
 
   advanceSessionQuestion: () => {
     const session = get().currentSession;

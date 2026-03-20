@@ -169,7 +169,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
                   key={index}
                   style={btnStyle}
                   onPress={() => handleAnswer(index)}
-                  disabled={answered !== null}
+                  disabled={answered !== null || timeLeft <= 0}
                 >
                   <ThemedText style={styles.optionLabel}>
                     {String.fromCharCode(65 + index)}.
