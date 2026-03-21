@@ -9,6 +9,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -18,6 +20,13 @@ import api from '@/services/api';
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const goBackOrProfile = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/profile');
+  };
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
 
@@ -58,7 +67,7 @@ export default function EditProfileScreen() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       updateUser(data.user);
-      router.back();
+      goBackOrProfile();
     } catch {
       Alert.alert('Error', 'Could not save changes.');
     } finally {
@@ -70,7 +79,7 @@ export default function EditProfileScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={goBackOrProfile}>
           <ThemedText style={styles.cancel}>Cancel</ThemedText>
         </TouchableOpacity>
         <ThemedText style={styles.title}>Edit Profile</ThemedText>
@@ -83,63 +92,69 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-        {/* Avatar */}
-        <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={pickAvatar}>
-            <Image
-              source={{ uri: avatarUri ?? user?.avatar_url ?? '' }}
-              style={styles.avatar}
-            />
-            <View style={styles.editBadge}>
-              <ThemedText style={styles.editBadgeText}>📷</ThemedText>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Display name */}
-        <View style={styles.field}>
-          <ThemedText style={styles.label}>Display Name</ThemedText>
-          <TextInput
-            style={styles.input}
-            value={displayName}
-            onChangeText={setDisplayName}
-            maxLength={60}
-            placeholder="Your name"
-            placeholderTextColor="#A1A1AA"
-          />
-        </View>
-
-        {/* Username (read-only) */}
-        <View style={styles.field}>
-          <ThemedText style={styles.label}>Username</ThemedText>
-          <View style={styles.readOnly}>
-            <ThemedText style={styles.readOnlyText}>@{user?.username}</ThemedText>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+          {/* Avatar */}
+          <View style={styles.avatarSection}>
+            <TouchableOpacity onPress={pickAvatar}>
+              <Image
+                source={{ uri: avatarUri ?? user?.avatar_url ?? '' }}
+                style={styles.avatar}
+              />
+              <View style={styles.editBadge}>
+                <ThemedText style={styles.editBadgeText}>📷</ThemedText>
+              </View>
+            </TouchableOpacity>
           </View>
-          <ThemedText style={styles.hint}>Username cannot be changed.</ThemedText>
-        </View>
 
-        {/* Bio */}
-        <View style={styles.field}>
-          <ThemedText style={styles.label}>Bio</ThemedText>
-          <TextInput
-            style={[styles.input, styles.bioInput]}
-            value={bio}
-            onChangeText={setBio}
-            multiline
-            maxLength={200}
-            placeholder="Tell us about yourself and your pets..."
-            placeholderTextColor="#A1A1AA"
-          />
-          <ThemedText style={styles.charCount}>{bio.length}/200</ThemedText>
-        </View>
-      </ScrollView>
+          {/* Display name */}
+          <View style={styles.field}>
+            <ThemedText style={styles.label}>Display Name</ThemedText>
+            <TextInput
+              style={styles.input}
+              value={displayName}
+              onChangeText={setDisplayName}
+              maxLength={60}
+              placeholder="Your name"
+              placeholderTextColor="#A1A1AA"
+            />
+          </View>
+
+          {/* Username (read-only) */}
+          <View style={styles.field}>
+            <ThemedText style={styles.label}>Username</ThemedText>
+            <View style={styles.readOnly}>
+              <ThemedText style={styles.readOnlyText}>@{user?.username}</ThemedText>
+            </View>
+            <ThemedText style={styles.hint}>Username cannot be changed.</ThemedText>
+          </View>
+
+          {/* Bio */}
+          <View style={styles.field}>
+            <ThemedText style={styles.label}>Bio</ThemedText>
+            <TextInput
+              style={[styles.input, styles.bioInput]}
+              value={bio}
+              onChangeText={setBio}
+              multiline
+              maxLength={200}
+              placeholder="Tell us about yourself and your pets..."
+              placeholderTextColor="#A1A1AA"
+            />
+            <ThemedText style={styles.charCount}>{bio.length}/200</ThemedText>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

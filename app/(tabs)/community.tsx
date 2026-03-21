@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   RefreshControl,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { CommunityCard } from '@/components/community/CommunityCard';
@@ -54,7 +54,7 @@ export default function CommunityScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         <ThemedText style={styles.title}>🐾 Communities</ThemedText>
@@ -104,10 +104,12 @@ export default function CommunityScreen() {
         data={filtered}
         keyExtractor={(item) => `community-${item.id}`}
         renderItem={({ item }) => (
-          <CommunityCard
-            community={item}
-            onJoin={!item.is_member ? () => handleJoin(item.id) : undefined}
-          />
+          Number.isFinite(Number(item?.id)) && typeof item?.name !== 'undefined' ? (
+            <CommunityCard
+              community={item}
+              onJoin={!item.is_member ? () => handleJoin(Number(item.id)) : undefined}
+            />
+          ) : null
         )}
         contentContainerStyle={styles.listContent}
         refreshControl={

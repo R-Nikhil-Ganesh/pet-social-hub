@@ -8,6 +8,8 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -49,41 +51,47 @@ export default function AddPetScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <ThemedText style={styles.title}>Add Pet</ThemedText>
-        <ThemedText style={styles.subtitle}>Create a pet profile for feed posts and stories.</ThemedText>
-        <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
-        <TextInput style={styles.input} placeholder="Breed" value={breed} onChangeText={setBreed} />
-        <TextInput
-          style={styles.input}
-          placeholder="Age"
-          value={age}
-          onChangeText={setAge}
-          keyboardType="number-pad"
-        />
-        <View style={styles.speciesRow}>
-          {(['dog', 'cat', 'bird', 'rabbit', 'other'] as const).map((value) => (
-            <TouchableOpacity
-              key={value}
-              style={[styles.speciesChip, species === value && styles.speciesChipActive]}
-              onPress={() => setSpecies(value)}
-            >
-              <ThemedText style={[styles.speciesText, species === value && styles.speciesTextActive]}>
-                {value}
-              </ThemedText>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
-          {submitting ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.submitText}>Save Pet</ThemedText>}
-        </TouchableOpacity>
-      </ScrollView>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ThemedText style={styles.title}>Add Pet</ThemedText>
+          <ThemedText style={styles.subtitle}>Create a pet profile for feed posts and stories.</ThemedText>
+          <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+          <TextInput style={styles.input} placeholder="Breed" value={breed} onChangeText={setBreed} />
+          <TextInput
+            style={styles.input}
+            placeholder="Age"
+            value={age}
+            onChangeText={setAge}
+            keyboardType="number-pad"
+          />
+          <View style={styles.speciesRow}>
+            {(['dog', 'cat', 'bird', 'rabbit', 'other'] as const).map((value) => (
+              <TouchableOpacity
+                key={value}
+                style={[styles.speciesChip, species === value && styles.speciesChipActive]}
+                onPress={() => setSpecies(value)}
+              >
+                <ThemedText style={[styles.speciesText, species === value && styles.speciesTextActive]}>
+                  {value}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+            {submitting ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.submitText}>Save Pet</ThemedText>}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9F9FB' },
+  flex: { flex: 1 },
   content: { padding: 16, gap: 12 },
   title: { fontSize: 24, fontWeight: '800', color: '#18181B' },
   subtitle: { fontSize: 14, color: '#71717A', lineHeight: 20 },

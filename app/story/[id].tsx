@@ -31,6 +31,13 @@ interface Story {
 export default function StoryViewerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const closeStory = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/feed');
+  };
 
   const [storyList, setStoryList] = useState<Story[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,7 +55,7 @@ export default function StoryViewerScreen() {
       const currentStory = allStories.find((s) => s.id === storyId);
 
       if (!currentStory) {
-        router.back();
+        closeStory();
         return;
       }
 
@@ -66,7 +73,7 @@ export default function StoryViewerScreen() {
       setProgress(0);
       setMediaFailed(false);
     } catch {
-      router.back();
+      closeStory();
     } finally {
       setLoading(false);
     }
@@ -89,7 +96,7 @@ export default function StoryViewerScreen() {
 
   const goNext = () => {
     if (currentIndex >= storyList.length - 1) {
-      router.back();
+      closeStory();
       return;
     }
 
@@ -98,7 +105,7 @@ export default function StoryViewerScreen() {
 
   const goPrev = () => {
     if (currentIndex <= 0) {
-      router.back();
+      closeStory();
       return;
     }
 
@@ -187,7 +194,7 @@ export default function StoryViewerScreen() {
           <ThemedText style={styles.username}>@{story.username}</ThemedText>
         </View>
         <View style={{ flex: 1 }} />
-        <TouchableOpacity onPress={() => router.back()} hitSlop={16}>
+        <TouchableOpacity onPress={closeStory} hitSlop={16}>
           <ThemedText style={styles.closeBtn}>✕</ThemedText>
         </TouchableOpacity>
       </View>

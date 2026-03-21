@@ -435,7 +435,7 @@ export default function CommunityDetailScreen() {
       ) : (
         <KeyboardAvoidingView
           style={styles.chatContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={140}
         >
           {isChatLoading ? (

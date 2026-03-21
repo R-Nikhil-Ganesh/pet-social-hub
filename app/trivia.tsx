@@ -87,7 +87,11 @@ export default function TriviaScreen() {
   const handleLeaveQueue = () => {
     if (!token) return;
     leaveTriviaQueue();
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/games');
   };
 
   return (

@@ -19,6 +19,13 @@ import { useAuthStore } from '@/store/authStore';
 
 export default function CreateStoryScreen() {
   const router = useRouter();
+  const goBackOrFeed = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/feed');
+  };
   const createStory = useFeedStore((s) => s.createStory);
   const user = useAuthStore((s) => s.user);
 
@@ -75,7 +82,7 @@ export default function CreateStoryScreen() {
       }
 
       await createStory(form);
-      router.back();
+      goBackOrFeed();
     } catch (err: any) {
       const status = err?.response?.status;
       const msg =
@@ -93,7 +100,7 @@ export default function CreateStoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Close */}
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.closeBtn} onPress={goBackOrFeed}>
         <ThemedText style={styles.closeBtnText}>✕</ThemedText>
       </TouchableOpacity>
 

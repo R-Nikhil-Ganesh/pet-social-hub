@@ -33,20 +33,35 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
+      <StatusBar style="dark" translucent={false} backgroundColor="#ffffff" />
+      <Stack
+        screenOptions={{
+          headerShown: true,
+          headerBackTitleVisible: false,
+        }}
+      >
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: true, title: 'Notifications' }} />
+        <Stack.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
+        <Stack.Screen name="rewards" options={{ headerShown: true, title: 'Rewards' }} />
+        <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
+        <Stack.Screen name="my-pets" options={{ headerShown: true, title: 'My Pets' }} />
+        <Stack.Screen name="add-pet" options={{ headerShown: true, title: 'Add Pet' }} />
+        <Stack.Screen name="pet/[id]" options={{ headerShown: true, title: 'Pet Details' }} />
         <Stack.Screen name="post/[id]" options={{ presentation: 'modal', headerShown: true, title: 'Post' }} />
-        <Stack.Screen name="community/[id]" options={{ headerShown: true }} />
+        <Stack.Screen name="community/[id]" options={{ headerShown: true, title: 'Community' }} />
         <Stack.Screen name="thread/[id]" options={{ headerShown: true, title: 'Thread' }} />
         <Stack.Screen name="user/[id]" options={{ headerShown: true, title: 'Profile' }} />
         <Stack.Screen name="followers/[id]" options={{ headerShown: true, title: 'Followers' }} />
         <Stack.Screen name="following/[id]" options={{ headerShown: true, title: 'Following' }} />
+        <Stack.Screen name="training" options={{ headerShown: true, title: 'Training' }} />
+        <Stack.Screen name="photo-contest" options={{ headerShown: true, title: 'Photo Contest' }} />
+        <Stack.Screen name="breed-guess" options={{ headerShown: true, title: 'Breed Guess' }} />
         <Stack.Screen name="story/[id]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
-        <Stack.Screen name="create-post" options={{ presentation: 'modal', headerShown: true, title: 'New Post' }} />
-        <Stack.Screen name="create-story" options={{ presentation: 'modal', headerShown: true, title: 'New Story' }} />
+        <Stack.Screen name="create-post" options={{ presentation: 'modal', headerShown: false, title: 'New Post' }} />
+        <Stack.Screen name="create-story" options={{ presentation: 'modal', headerShown: false, title: 'New Story' }} />
+        <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
         <Stack.Screen name="trivia" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       </Stack>
     </>

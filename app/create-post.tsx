@@ -21,6 +21,13 @@ import { useFeedStore } from '@/store/feedStore';
 
 export default function CreatePostScreen() {
   const router = useRouter();
+  const goBackOrFeed = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/feed');
+  };
   const user = useAuthStore((s) => s.user);
   const createPost = useFeedStore((s) => s.createPost);
 
@@ -75,7 +82,7 @@ export default function CreatePostScreen() {
         }
       }
       await createPost(form);
-      router.back();
+      goBackOrFeed();
     } catch {
       Alert.alert('Error', 'Could not create post. Please try again.');
     } finally {
@@ -86,12 +93,12 @@ export default function CreatePostScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+          <TouchableOpacity onPress={goBackOrFeed} hitSlop={12}>
             <ThemedText style={styles.cancel}>Cancel</ThemedText>
           </TouchableOpacity>
           <ThemedText style={styles.title}>New Post</ThemedText>

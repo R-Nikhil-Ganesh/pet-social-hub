@@ -12,17 +12,26 @@ interface CommunityCardProps {
 export function CommunityCard({ community, onJoin }: CommunityCardProps) {
   const router = useRouter();
   const [imageFailed, setImageFailed] = useState(false);
+  const name = String(community?.name ?? 'Community');
+  const description = String(community?.description ?? '');
+
   const fallbackLabel = useMemo(() => {
-    const words = community.name.split(/\s+/).filter(Boolean).slice(0, 2);
+    const words = name.split(/\s+/).filter(Boolean).slice(0, 2);
     return words.map((word) => word[0]?.toUpperCase() ?? '').join('') || 'P';
-  }, [community.name]);
+  }, [name]);
   const canShowImage = Boolean(community.icon_url) && !imageFailed;
-  const safeEmoji = community.icon_emoji && !/^\?+$/.test(community.icon_emoji) ? community.icon_emoji : '';
+  const memberCount = Number(community.member_count ?? 0);
+  const unreadCount = Number(community.unread_count ?? 0);
+  const communityId = Number(community?.id);
 
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/community/${community.id}`)}
+      onPress={() => {
+        if (Number.isFinite(communityId) && communityId > 0) {
+          router.push(`/community/${communityId}`);
+        }
+      }}
       activeOpacity={0.85}
     >
       <View style={styles.iconWrapper}>
@@ -33,8 +42,6 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
             resizeMode="cover"
             onError={() => setImageFailed(true)}
           />
-        ) : safeEmoji ? (
-          <ThemedText style={styles.icon}>{safeEmoji}</ThemedText>
         ) : (
           <ThemedText style={styles.iconFallback}>{fallbackLabel}</ThemedText>
         )}
@@ -42,7 +49,7 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
 
       <View style={styles.info}>
         <View style={styles.nameRow}>
-          <ThemedText style={styles.name}>{community.name}</ThemedText>
+          <ThemedText style={styles.name}>{name}</ThemedText>
           {community.is_default && (
             <View style={styles.defaultBadge}>
               <ThemedText style={styles.defaultText}>Auto</ThemedText>
@@ -50,13 +57,13 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
           )}
         </View>
         <ThemedText style={styles.description} numberOfLines={2}>
-          {community.description}
+          {description}
         </ThemedText>
         <View style={styles.stats}>
-          <ThemedText style={styles.stat}>👥 {community.member_count.toLocaleString()} members</ThemedText>
-          {community.unread_count ? (
+          <ThemedText style={styles.stat}>Members: {memberCount.toLocaleString()}</ThemedText>
+          {unreadCount > 0 ? (
             <View style={styles.unreadBadge}>
-              <ThemedText style={styles.unreadText}>{community.unread_count}</ThemedText>
+              <ThemedText style={styles.unreadText}>{unreadCount}</ThemedText>
             </View>
           ) : null}
         </View>
@@ -68,7 +75,7 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
         </TouchableOpacity>
       ) : (
         <View style={styles.joinedBadge}>
-          <ThemedText style={styles.joinedText}>✓</ThemedText>
+          <ThemedText style={styles.joinedText}>Joined</ThemedText>
         </View>
       )}
     </TouchableOpacity>
@@ -102,9 +109,6 @@ const styles = StyleSheet.create({
   iconImage: {
     width: '100%',
     height: '100%',
-  },
-  icon: {
-    fontSize: 26,
   },
   iconFallback: {
     fontSize: 16,
@@ -177,7 +181,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   joinedBadge: {
-    width: 32,
+    minWidth: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: '#F0FDF4',
@@ -185,10 +189,11 @@ const styles = StyleSheet.create({
     borderColor: '#22C55E',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   joinedText: {
     color: '#16A34A',
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '700',
   },
 });
