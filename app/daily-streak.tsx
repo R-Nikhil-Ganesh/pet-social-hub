@@ -49,7 +49,7 @@ export default function DailyStreakScreen() {
           <ThemedText style={styles.headerSub}>
             {streakCount}/{totalChallenges} tasks done today
           </ThemedText>
-          <ThemedText style={styles.resetText}>Tasks reset every 24 hours</ThemedText>
+          <ThemedText style={styles.resetText}>Tasks reset daily</ThemedText>
           <View style={styles.streakBars}>
             {challenges.map((c) => (
               <View key={c.id} style={[styles.streakBar, c.completed_today && styles.streakBarDone]} />

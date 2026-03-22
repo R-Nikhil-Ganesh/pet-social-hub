@@ -102,7 +102,7 @@ export default function GamesScreen() {
                 <ThemedText variant="body" style={styles.streakSub}>
                   {streakCount}/{totalChallenges} challenges done today
                 </ThemedText>
-                <ThemedText style={styles.streakResetNote}>Resets every 24 hours</ThemedText>
+                <ThemedText style={styles.streakResetNote}>Resets daily</ThemedText>
               </View>
               <View style={styles.streakBars}>
                 {challenges.map((c) => (

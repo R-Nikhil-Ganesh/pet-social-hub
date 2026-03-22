@@ -8,7 +8,10 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: 'fade',
+        animation: 'shift',
+        lazy: true,
+        freezeOnBlur: true,
+        popToTopOnBlur: false,
         tabBarShowLabel: true,
         tabBarActiveTintColor: '#FF4FA3',
         tabBarInactiveTintColor: '#8C6298',
