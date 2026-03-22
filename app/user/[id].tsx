@@ -125,6 +125,7 @@ export default function UserProfileScreen() {
         <LinearGradient colors={['#F97316', '#FB7185']} style={styles.hero}>
           <Avatar
             uri={profile.avatar_url}
+            seed={profile.id}
             size={80}
             isProfessional={profile.is_professional}
             style={styles.heroAvatar}
@@ -197,7 +198,7 @@ export default function UserProfileScreen() {
                     <Image source={{ uri: pet.photo_url }} style={styles.petPhoto} />
                   ) : (
                     <View style={[styles.petPhoto, styles.petPhotoFallback]}>
-                      <Avatar size={30} fallback="" />
+                      <Avatar size={30} fallback="🐾" seed={`pet-${pet.id}`} />
                     </View>
                   )}
                   <ThemedText style={styles.petName}>{pet.name}</ThemedText>

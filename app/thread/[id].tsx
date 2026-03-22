@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useCommunityStore, ThreadReply } from '@/store/communityStore';
 import { useAuthStore } from '@/store/authStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { formatRelativeTime } from '@/utils/relativeTime';
 
 interface ReplyRowProps {
   reply: ThreadReply;
@@ -32,15 +33,6 @@ interface ReplyRowProps {
 function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
   const upvoteReply = useCommunityStore((s) => s.upvoteReply);
 
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h`;
-    return `${Math.floor(hrs / 24)}d`;
-  };
-
   return (
     <Card style={[styles.replyContainer, { marginLeft: depth * 20 }]}>
       <View style={styles.replyHeader}>
@@ -50,7 +42,7 @@ function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
           accessibilityRole="button"
           accessibilityLabel={`Open ${reply.display_name} profile`}
         >
-          <Avatar uri={reply.avatar_url} size={28} isProfessional={reply.is_professional} />
+          <Avatar uri={reply.avatar_url} seed={reply.user_id} size={28} isProfessional={reply.is_professional} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => onUserPress(reply.user_id)}
@@ -60,7 +52,7 @@ function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
         >
           <ThemedText style={styles.replyAuthor}>{reply.display_name}</ThemedText>
         </TouchableOpacity>
-        <ThemedText style={styles.replyTime}>{timeAgo(reply.created_at)}</ThemedText>
+        <ThemedText style={styles.replyTime}>{formatRelativeTime(reply.created_at)}</ThemedText>
       </View>
       <ThemedText style={styles.replyContent}>{reply.content}</ThemedText>
       <View style={styles.replyActions}>
@@ -171,6 +163,7 @@ export default function ThreadDetailScreen() {
                 >
                   <Avatar
                     uri={activeThread.avatar_url}
+                    seed={activeThread.user_id}
                     size={40}
                     isProfessional={activeThread.is_professional}
                   />
@@ -232,7 +225,7 @@ export default function ThreadDetailScreen() {
             </View>
           )}
           <View style={styles.inputRow}>
-            <Avatar uri={user?.avatar_url} size={32} />
+            <Avatar uri={user?.avatar_url} seed={user?.id ?? 'me'} size={32} />
             <TextInput
               style={styles.input}
               value={replyInput}

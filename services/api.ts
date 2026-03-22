@@ -1,11 +1,42 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules, Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL;
 
+const normalizeBaseUrl = (url: string) => {
+  const trimmed = url.trim().replace(/\/$/, '');
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `http://${trimmed}`;
+};
+
+const getExpoDevHost = () => {
+  // Expo SDK 54 can expose host information via these fields depending on runtime.
+  const hostCandidates = [
+    Constants.expoConfig?.hostUri,
+    (Constants as { manifest2?: { extra?: { expoGo?: { debuggerHost?: string } } } }).manifest2?.extra?.expoGo?.debuggerHost,
+    (Constants as { manifest?: { debuggerHost?: string } }).manifest?.debuggerHost,
+  ];
+
+  for (const candidate of hostCandidates) {
+    if (!candidate) continue;
+    const host = String(candidate).split(':')[0];
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return host;
+    }
+  }
+
+  return null;
+};
+
 const getDevApiBaseUrl = () => {
-  if (configuredApiUrl) return configuredApiUrl;
+  if (configuredApiUrl) return normalizeBaseUrl(configuredApiUrl);
+
+  const expoHost = getExpoDevHost();
+  if (expoHost) {
+    return `http://${expoHost}:3001`;
+  }
 
   // In Expo dev, infer the host machine IP from Metro bundle URL.
   const scriptURL = NativeModules?.SourceCode?.scriptURL as string | undefined;
@@ -40,24 +71,23 @@ function isFormDataLike(data: unknown) {
 }
 
 api.interceptors.request.use(async (config) => {
-  if (!config.headers) {
-    config.headers = {};
-  }
+  const headers = AxiosHeaders.from(config.headers);
 
   // React Native Android can fail to infer multipart correctly unless this header is explicit.
   if (isFormDataLike(config.data)) {
     if (Platform.OS === 'android') {
-      config.headers['Content-Type'] = 'multipart/form-data';
+      headers.set('Content-Type', 'multipart/form-data');
     } else {
-      delete config.headers['Content-Type'];
-      delete config.headers['content-type'];
+      headers.delete('Content-Type');
+      headers.delete('content-type');
     }
   }
 
   const token = await AsyncStorage.getItem('pawprint_token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    headers.set('Authorization', `Bearer ${token}`);
   }
+  config.headers = headers;
   return config;
 });
 

@@ -190,7 +190,7 @@ export default function StoryViewerScreen() {
 
       {/* Author row */}
       <View style={styles.authorRow}>
-        <Avatar uri={story.avatar_url} size={36} isProfessional={false} />
+        <Avatar uri={story.avatar_url} seed={story.user_id} size={36} isProfessional={false} />
         <View>
           <ThemedText style={styles.displayName}>{story.display_name}</ThemedText>
           <ThemedText style={styles.username}>@{story.username}</ThemedText>

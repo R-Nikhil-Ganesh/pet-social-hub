@@ -21,6 +21,11 @@ import { usePointsStore } from '@/store/pointsStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const GAMES: GameMode[] = ['trivia', 'photo_contest', 'training', 'breed_guess'];
+const GAME_IMAGES: Partial<Record<GameMode, any>> = {
+  trivia: require('../../assets/images/trivia.png'),
+  photo_contest: require('../../assets/images/photo-contest.png'),
+  breed_guess: require('../../assets/images/guess-breed.png'),
+};
 
 export default function GamesScreen() {
   const router = useRouter();
@@ -114,7 +119,8 @@ export default function GamesScreen() {
                   key={mode}
                   mode={mode}
                   onPress={() => handleGamePress(mode)}
-                  size={mode === 'trivia' ? 'wide' : 'square'}
+                  size="square"
+                  imageSource={GAME_IMAGES[mode]}
                 />
               ))}
             </View>
@@ -147,7 +153,7 @@ export default function GamesScreen() {
                   onPress={() => router.push(`/user/${entry.user_id}`)}
                 >
                   <View style={styles.rank}>{renderRank(index, entry.rank)}</View>
-                  <Avatar uri={entry.avatar_url} size={36} />
+                  <Avatar uri={entry.avatar_url} seed={entry.user_id} size={36} />
                   <View style={styles.entryInfo}>
                     <ThemedText variant="label" style={styles.entryName}>{entry.display_name}</ThemedText>
                     <ThemedText variant="caption" style={styles.entryUsername}>@{entry.username}</ThemedText>

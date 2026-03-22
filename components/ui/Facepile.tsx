@@ -1,7 +1,5 @@
 import React, { useMemo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/theme/tokens';
 
 interface FacepileProps {
   seed: string | number;
@@ -10,14 +8,19 @@ interface FacepileProps {
 }
 
 export function Facepile({ seed, size = 24, count = 3 }: FacepileProps) {
+  const safeCount = Math.max(0, count);
   const avatars = useMemo(
     () =>
-      Array.from({ length: count }).map((_, index) => ({
+      Array.from({ length: safeCount }).map((_, index) => ({
         id: `${seed}-${index}`,
-        uri: `https://api.dicebear.com/7.x/pixel-art/png?seed=pet-${seed}-${index}`,
+        uri: `https://api.dicebear.com/7.x/pixel-art/png?seed=user-${seed}-${index}`,
       })),
-    [count, seed]
+    [safeCount, seed]
   );
+
+  if (safeCount === 0) {
+    return null;
+  }
 
   return (
     <View style={styles.row}>
@@ -31,7 +34,7 @@ export function Facepile({ seed, size = 24, count = 3 }: FacepileProps) {
               height: size,
               borderRadius: size / 2,
               marginLeft: index === 0 ? 0 : -size * 0.35,
-              zIndex: count - index,
+              zIndex: safeCount - index,
             },
           ]}
         >
@@ -42,9 +45,6 @@ export function Facepile({ seed, size = 24, count = 3 }: FacepileProps) {
           />
         </View>
       ))}
-      <View style={[styles.fallbackIcon, { width: size, height: size, borderRadius: size / 2, marginLeft: -size * 0.35 }]}>
-        <Ionicons name="paw" size={size * 0.48} color={colors.brand.primary} />
-      </View>
     </View>
   );
 }
@@ -61,12 +61,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  fallbackIcon: {
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    backgroundColor: colors.bg.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

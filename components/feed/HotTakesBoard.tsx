@@ -39,7 +39,7 @@ function HotTakeCard({ hotTake }: HotTakeCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Avatar uri={hotTake.avatar_url} size={32} />
+        <Avatar uri={hotTake.avatar_url} seed={hotTake.username} size={32} />
         <View style={styles.cardMeta}>
           <ThemedText style={styles.cardUser}>{hotTake.display_name}</ThemedText>
           {hotTake.pet ? (

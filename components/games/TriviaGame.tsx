@@ -106,7 +106,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
       {/* Scoreboard */}
       <View style={styles.scoreboard}>
         <View style={styles.playerInfo}>
-          <Avatar uri={user?.avatar_url} size={36} />
+          <Avatar uri={user?.avatar_url} seed={user?.id ?? 'me'} size={36} />
           <View>
             <ThemedText style={styles.playerName}>You</ThemedText>
             <ThemedText style={styles.playerScore}>{session.myScore} pts</ThemedText>
@@ -125,7 +125,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
             </ThemedText>
             <ThemedText style={styles.playerScore}>{session.opponentScore} pts</ThemedText>
           </View>
-          <Avatar uri={session.opponent?.avatar_url} size={36} />
+          <Avatar uri={session.opponent?.avatar_url} seed={session.opponent?.id ?? session.opponent?.username ?? 'opponent'} size={36} />
         </View>
       </View>
 

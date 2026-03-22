@@ -112,6 +112,7 @@ export default function ProfileScreen() {
                 <View style={styles.avatarGlowWrap}>
                   <Avatar
                     uri={user.avatar_url}
+                    seed={user.id}
                     size={84}
                     isProfessional={isProfessional}
                     style={styles.heroAvatar}

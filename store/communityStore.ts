@@ -199,9 +199,15 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   upvoteThread: async (threadId) => {
-    const activeThread = get().activeThread;
+    const prevThreads = get().threads;
+    const prevActiveThread = get().activeThread;
+    const currentThread = prevThreads.find((t) => t.id === threadId) ?? (prevActiveThread?.id === threadId ? prevActiveThread : null);
+    if (!currentThread) return;
+
+    const nextVoteState = !currentThread.user_upvoted;
+
     set({
-      threads: get().threads.map((t) =>
+      threads: prevThreads.map((t) =>
         t.id === threadId
           ? {
               ...t,
@@ -211,15 +217,23 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           : t
       ),
       activeThread:
-        activeThread && activeThread.id === threadId
+        prevActiveThread && prevActiveThread.id === threadId
           ? {
-              ...activeThread,
-              user_upvoted: !activeThread.user_upvoted,
-              upvotes: activeThread.upvotes + (activeThread.user_upvoted ? -1 : 1),
+              ...prevActiveThread,
+              user_upvoted: !prevActiveThread.user_upvoted,
+              upvotes: prevActiveThread.upvotes + (prevActiveThread.user_upvoted ? -1 : 1),
             }
-          : activeThread,
+          : prevActiveThread,
     });
-    await api.post(`/threads/${threadId}/vote`, { is_upvote: true });
+
+    try {
+      await api.post(`/threads/${threadId}/vote`, { is_upvote: nextVoteState });
+    } catch {
+      set({
+        threads: prevThreads,
+        activeThread: prevActiveThread,
+      });
+    }
   },
 
   fetchReplies: async (threadId) => {
@@ -236,13 +250,24 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   upvoteReply: async (replyId) => {
-    const replies = get().replies;
-    const threadId = findReplyThreadId(replies, replyId);
+    const prevReplies = get().replies;
+    const threadId = findReplyThreadId(prevReplies, replyId);
     if (!threadId) return;
+
+    const targetReply = findReplyById(prevReplies, replyId);
+    if (!targetReply) return;
+
+    const nextVoteState = !targetReply.user_upvoted;
+
     set({
-      replies: toggleReplyVote(replies, replyId),
+      replies: toggleReplyVote(prevReplies, replyId),
     });
-    await api.post(`/threads/${threadId}/vote`, { is_upvote: true, reply_id: replyId });
+
+    try {
+      await api.post(`/threads/${threadId}/vote`, { is_upvote: nextVoteState, reply_id: replyId });
+    } catch {
+      set({ replies: prevReplies });
+    }
   },
 
   fetchChatHistory: async (communityId) => {
@@ -341,6 +366,23 @@ function findReplyThreadId(replies: ThreadReply[], replyId: number): number | nu
 
     if (reply.children?.length) {
       const nested = findReplyThreadId(reply.children, replyId);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return null;
+}
+
+function findReplyById(replies: ThreadReply[], replyId: number): ThreadReply | null {
+  for (const reply of replies) {
+    if (reply.id === replyId) {
+      return reply;
+    }
+
+    if (reply.children?.length) {
+      const nested = findReplyById(reply.children, replyId);
       if (nested) {
         return nested;
       }
@@ -464,7 +506,7 @@ function applySingleUserReactionOptimistic(
 
     cleared[existingIndex] = {
       ...existing,
-      count: hasUser ? nextUserIds.length : Math.max(1, existing.count),
+      count: hasUser && Array.isArray(nextUserIds) ? nextUserIds.length : Math.max(1, existing.count),
       user_reacted: hasUser ? true : existing.user_reacted,
       user_ids: nextUserIds,
       users: nextUsers,

@@ -101,6 +101,13 @@ export default function FollowingScreen() {
         const nextHasMore = Boolean(data?.has_more);
         hasMoreRef.current = nextHasMore;
         setHasMore(nextHasMore);
+      } catch {
+        // Keep the list usable and prevent unhandled promise errors when network is unavailable.
+        if (replace || nextPage === 1) {
+          setUsers([]);
+        }
+        hasMoreRef.current = false;
+        setHasMore(false);
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -148,7 +155,7 @@ export default function FollowingScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Open ${item.display_name} profile`}
               >
-                <Avatar uri={item.avatar_url} size={46} isProfessional={item.is_professional} />
+                <Avatar uri={item.avatar_url} seed={item.id} size={46} isProfessional={item.is_professional} />
                 <View style={styles.meta}>
                   <View style={styles.nameRow}>
                     <ThemedText style={styles.displayName}>{item.display_name}</ThemedText>

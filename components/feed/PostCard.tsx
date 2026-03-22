@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PetTag } from '@/components/ui/PetTag';
 import { Post, useFeedStore } from '@/store/feedStore';
+import { formatRelativeTime } from '@/utils/relativeTime';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -77,15 +78,6 @@ export function PostCard({ post }: PostCardProps) {
     }).start();
   };
 
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h`;
-    return `${Math.floor(hrs / 24)}d`;
-  };
-
   return (
     <Animated.View style={[styles.card, { transform: [{ scale: cardScale }] }]}>
       {/* Header */}
@@ -96,13 +88,13 @@ export function PostCard({ post }: PostCardProps) {
           onPressIn={onCardPressIn}
           onPressOut={onCardPressOut}
         >
-          <Avatar uri={post.avatar_url} size={42} />
+          <Avatar uri={post.avatar_url} seed={post.user_id} size={42} />
           <View style={styles.userInfo}>
             <ThemedText style={styles.displayName}>{post.display_name}</ThemedText>
             <ThemedText style={styles.username}>@{post.username}</ThemedText>
           </View>
         </TouchableOpacity>
-        <ThemedText style={styles.time}>{timeAgo(post.created_at)}</ThemedText>
+        <ThemedText style={styles.time}>{formatRelativeTime(post.created_at)}</ThemedText>
       </View>
 
       {/* Pet Context Tag */}

@@ -22,6 +22,7 @@ import { useAuthStore } from '@/store/authStore';
 import api from '@/services/api';
 import { Post } from '@/store/feedStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { formatRelativeTime } from '@/utils/relativeTime';
 
 interface Comment {
   id: number;
@@ -79,15 +80,6 @@ export default function PostDetailScreen() {
     }
   };
 
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -108,7 +100,7 @@ export default function PostDetailScreen() {
           keyExtractor={(item) => `comment-${item.id}`}
           renderItem={({ item }) => (
             <Card style={styles.comment}>
-              <Avatar uri={item.avatar_url} size={34} />
+              <Avatar uri={item.avatar_url} seed={item.user_id} size={34} />
               <View style={styles.commentBody}>
                 <View style={styles.commentHeader}>
                   <TouchableOpacity
@@ -119,7 +111,7 @@ export default function PostDetailScreen() {
                   >
                     <ThemedText style={styles.commentAuthor}>{item.display_name}</ThemedText>
                   </TouchableOpacity>
-                  <ThemedText style={styles.commentTime}>{timeAgo(item.created_at)}</ThemedText>
+                  <ThemedText style={styles.commentTime}>{formatRelativeTime(item.created_at, { withSuffix: true })}</ThemedText>
                 </View>
                 <ThemedText style={styles.commentContent}>{item.content}</ThemedText>
               </View>
@@ -144,7 +136,7 @@ export default function PostDetailScreen() {
 
         {/* Comment Input */}
         <View style={styles.inputArea}>
-          <Avatar uri={user?.avatar_url} size={34} />
+          <Avatar uri={user?.avatar_url} seed={user?.id ?? 'me'} size={34} />
           <TextInput
             style={styles.input}
             value={commentInput}

@@ -118,7 +118,7 @@ export default function CreatePostScreen() {
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
           {/* Author */}
           <View style={styles.authorRow}>
-            <Avatar uri={user?.avatar_url ?? ''} size={42} isProfessional={user?.is_professional ?? false} />
+            <Avatar uri={user?.avatar_url ?? ''} seed={user?.id ?? 'me'} size={42} isProfessional={user?.is_professional ?? false} />
             <View>
               <ThemedText style={styles.displayName}>{user?.display_name}</ThemedText>
               <ThemedText style={styles.username}>@{user?.username}</ThemedText>

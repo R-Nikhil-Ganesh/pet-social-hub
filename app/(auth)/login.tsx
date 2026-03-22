@@ -7,10 +7,10 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { AnimatedEntrance } from '@/components/ui/AnimatedEntrance';
 import { Button } from '@/components/ui/Button';
@@ -71,7 +71,11 @@ export default function LoginScreen() {
           {/* Logo / Hero */}
           <AnimatedEntrance delay={30}>
             <View style={styles.hero}>
-              <Ionicons name="paw" size={52} color={colors.brand.primary} />
+              <Image
+                source={require('../../assets/images/brand_logo.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
+              />
               <ThemedText variant="display" style={styles.appName}>Pawprint</ThemedText>
               <ThemedText variant="body" style={styles.tagline}>Where every pet is the star</ThemedText>
             </View>
@@ -141,6 +145,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xxl,
     gap: spacing.xs,
+  },
+  brandLogo: {
+    width: 96,
+    height: 96,
   },
   logo: {
     fontSize: 60,

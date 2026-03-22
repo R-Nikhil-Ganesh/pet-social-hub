@@ -25,6 +25,7 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
   }, [name]);
   const canShowImage = Boolean(community.icon_url) && !imageFailed;
   const memberCount = Number(community.member_count ?? 0);
+  const visibleMemberAvatars = Math.min(3, Math.max(0, memberCount));
   const unreadCount = Number(community.unread_count ?? 0);
   const communityId = Number(community?.id);
 
@@ -65,7 +66,7 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
             {description}
           </ThemedText>
           <View style={styles.stats}>
-            <Facepile seed={communityId} size={24} count={3} />
+            <Facepile seed={communityId} size={24} count={visibleMemberAvatars} />
             <ThemedText style={styles.stat}>{memberCount.toLocaleString()} members</ThemedText>
             {unreadCount > 0 ? (
               <View style={styles.unreadBadge}>

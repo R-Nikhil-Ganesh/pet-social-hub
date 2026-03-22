@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Animated, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Animated, View, StyleSheet, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,6 +11,7 @@ interface GameCardProps {
   onPress: () => void;
   disabled?: boolean;
   size?: 'wide' | 'square';
+  imageSource?: ImageSourcePropType;
 }
 
 const GAME_META: Record<
@@ -43,7 +44,7 @@ const GAME_META: Record<
   },
 };
 
-export function GameCard({ mode, onPress, disabled, size = 'square' }: GameCardProps) {
+export function GameCard({ mode, onPress, disabled, size = 'square', imageSource }: GameCardProps) {
   const meta = GAME_META[mode];
   const cardScale = useRef(new Animated.Value(1)).current;
 
@@ -88,7 +89,13 @@ export function GameCard({ mode, onPress, disabled, size = 'square' }: GameCardP
             end={{ x: 1, y: 1 }}
             style={styles.glossOverlay}
           />
-          <Ionicons name={meta.icon} size={34} color="#fff" style={styles.icon} />
+          {imageSource ? (
+            <View style={styles.imageWrap}>
+              <Image source={imageSource} style={styles.image} resizeMode="cover" />
+            </View>
+          ) : (
+            <Ionicons name={meta.icon} size={34} color="#fff" style={styles.icon} />
+          )}
           <View style={styles.textGroup}>
             <ThemedText style={styles.title}>{meta.title}</ThemedText>
             <ThemedText style={styles.description}>{meta.description}</ThemedText>
@@ -137,6 +144,19 @@ const styles = StyleSheet.create({
   icon: {
     width: 38,
     textAlign: 'center',
+  },
+  imageWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.32)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
   textGroup: {
     flex: 1,

@@ -53,7 +53,7 @@ export default function LeaderboardScreen() {
               {index < 3 ? '' : `#${index + 1}`}
             </ThemedText>
             {index < 3 ? <Ionicons name="trophy" size={16} color={medalColor(index + 1)} style={styles.topIcon} /> : null}
-            <Avatar uri={item.avatar_url} size={40} isProfessional={false} />
+            <Avatar uri={item.avatar_url} seed={item.user_id} size={40} isProfessional={false} />
             <View style={styles.info}>
               <ThemedText style={styles.name}>{item.display_name}</ThemedText>
               <ThemedText style={styles.username}>@{item.username}</ThemedText>

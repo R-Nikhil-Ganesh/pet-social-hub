@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Image, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,17 +7,41 @@ interface AvatarProps {
   uri?: string;
   size?: number;
   fallback?: string;
+  seed?: string | number;
   isProfessional?: boolean;
   style?: ViewStyle;
 }
 
-export function Avatar({ uri, size = 40, fallback = '', isProfessional, style }: AvatarProps) {
+export function Avatar({ uri, size = 40, fallback = '', seed, isProfessional, style }: AvatarProps) {
+  const [generatedFailed, setGeneratedFailed] = useState(false);
+  const generatedAvatarUri = useMemo(() => {
+    const seedBase = String(seed ?? (fallback?.trim() || 'user-default'));
+    return `https://api.dicebear.com/7.x/pixel-art/png?seed=user-${encodeURIComponent(seedBase)}`;
+  }, [fallback, seed]);
+
+  const shouldShowGeneratedAvatar = !uri && !generatedFailed;
+
   return (
     <View style={[styles.wrapper, { width: size, height: size, borderRadius: size / 2 }, style]}>
       {uri ? (
         <Image
           source={{ uri }}
           style={{ width: size, height: size, borderRadius: size / 2 }}
+        />
+      ) : fallback ? (
+        <View
+          style={[
+            styles.fallback,
+            { width: size, height: size, borderRadius: size / 2 },
+          ]}
+        >
+          <ThemedText style={{ fontSize: size * 0.45 }}>{fallback}</ThemedText>
+        </View>
+      ) : shouldShowGeneratedAvatar ? (
+        <Image
+          source={{ uri: generatedAvatarUri }}
+          style={{ width: size, height: size, borderRadius: size / 2 }}
+          onError={() => setGeneratedFailed(true)}
         />
       ) : (
         <View
@@ -26,11 +50,7 @@ export function Avatar({ uri, size = 40, fallback = '', isProfessional, style }:
             { width: size, height: size, borderRadius: size / 2 },
           ]}
         >
-          {fallback ? (
-            <ThemedText style={{ fontSize: size * 0.45 }}>{fallback}</ThemedText>
-          ) : (
-            <Ionicons name="paw-outline" size={size * 0.45} color="#7C3AED" />
-          )}
+          <Ionicons name="person" size={size * 0.45} color="#7C3AED" />
         </View>
       )}
       {isProfessional && (

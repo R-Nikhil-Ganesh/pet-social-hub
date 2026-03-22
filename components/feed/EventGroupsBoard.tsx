@@ -25,6 +25,10 @@ interface EventGroupsBoardProps {
   connections: ConnectionUser[];
 }
 
+const EVENT_ACCENT = '#6366F1';
+const EVENT_ACCENT_DARK = '#4F46E5';
+const EVENT_ACCENT_SOFT = '#EEF2FF';
+
 function relationLabel(connection: ConnectionUser) {
   if (connection.is_following && connection.is_follower) return 'Mutual';
   if (connection.is_following) return 'Following';
@@ -99,9 +103,10 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.eventsScroll}>
         {events.map((event) => (
-          <View key={event.id} style={styles.eventCard}>
-            {event.cover_url ? <Image source={{ uri: event.cover_url }} style={styles.eventCover} /> : null}
-            <View style={styles.eventBody}>
+          <View key={event.id} style={styles.eventCardShell}>
+            <View style={styles.eventCard}>
+              {event.cover_url ? <Image source={{ uri: event.cover_url }} style={styles.eventCover} /> : null}
+              <View style={styles.eventBody}>
               <ThemedText style={styles.eventDate}>{formatStartsAt(event.starts_at)}</ThemedText>
               <ThemedText style={styles.eventTitle}>{event.title}</ThemedText>
               <View style={styles.locationRow}>
@@ -138,7 +143,7 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
                       <View style={styles.groupAvatars}>
                         {group.members.slice(0, 4).map((member, index) => (
                           <View key={member.id} style={[styles.memberAvatarWrap, { marginLeft: index === 0 ? 0 : -10 }]}>
-                            <Avatar uri={member.avatar_url} size={22} />
+                            <Avatar uri={member.avatar_url} seed={member.id} size={22} />
                           </View>
                         ))}
                       </View>
@@ -173,7 +178,7 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
                       <View style={styles.groupAvatars}>
                         {group.members.slice(0, 4).map((member, index) => (
                           <View key={member.id} style={[styles.memberAvatarWrap, { marginLeft: index === 0 ? 0 : -10 }]}>
-                            <Avatar uri={member.avatar_url} size={22} />
+                            <Avatar uri={member.avatar_url} seed={member.id} size={22} />
                           </View>
                         ))}
                       </View>
@@ -190,6 +195,7 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
                 <ThemedText style={styles.createGroupBtnText}>Create Group</ThemedText>
               </TouchableOpacity>
             </View>
+          </View>
           </View>
         ))}
       </ScrollView>
@@ -214,14 +220,14 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
                     onPress={() => toggleMember(item.id)}
                     activeOpacity={0.86}
                   >
-                    <Avatar uri={item.avatar_url} size={38} />
+                    <Avatar uri={item.avatar_url} seed={item.id} size={38} />
                     <View style={styles.connectionMeta}>
                       <ThemedText style={styles.connectionName}>{item.display_name}</ThemedText>
                       <ThemedText style={styles.connectionUsername}>@{item.username}</ThemedText>
                     </View>
                     <View style={styles.connectionRight}>
                       <ThemedText style={styles.connectionRole}>{relationLabel(item)}</ThemedText>
-                      <Ionicons name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={selected ? '#7C3AED' : '#A1A1AA'} />
+                      <Ionicons name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={selected ? EVENT_ACCENT : '#A1A1AA'} />
                     </View>
                   </TouchableOpacity>
                 );
@@ -278,18 +284,21 @@ const styles = StyleSheet.create({
   },
   eventsScroll: {
     paddingHorizontal: 16,
+    paddingVertical: 4,
     gap: 12,
   },
-  eventCard: {
+  eventCardShell: {
     width: 290,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  eventCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
   },
   eventCover: {
     width: '100%',
@@ -301,7 +310,7 @@ const styles = StyleSheet.create({
   },
   eventDate: {
     fontSize: 11,
-    color: '#7C3AED',
+    color: EVENT_ACCENT_DARK,
     fontWeight: '700',
   },
   eventTitle: {
@@ -370,7 +379,7 @@ const styles = StyleSheet.create({
   createGroupBtn: {
     marginTop: 6,
     borderRadius: 10,
-    backgroundColor: '#7C3AED',
+    backgroundColor: EVENT_ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 9,
@@ -423,8 +432,8 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   connectionRowSelected: {
-    borderColor: '#7C3AED',
-    backgroundColor: '#FAF5FF',
+    borderColor: EVENT_ACCENT,
+    backgroundColor: EVENT_ACCENT_SOFT,
   },
   connectionMeta: {
     flex: 1,
@@ -445,12 +454,12 @@ const styles = StyleSheet.create({
   },
   connectionRole: {
     fontSize: 11,
-    color: '#6D28D9',
+    color: EVENT_ACCENT_DARK,
     fontWeight: '600',
   },
   connectionCheck: {
     fontSize: 16,
-    color: '#6D28D9',
+    color: EVENT_ACCENT_DARK,
     fontWeight: '800',
   },
   modalActions: {
@@ -476,7 +485,7 @@ const styles = StyleSheet.create({
     flex: 2,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#7C3AED',
+    backgroundColor: EVENT_ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
   },

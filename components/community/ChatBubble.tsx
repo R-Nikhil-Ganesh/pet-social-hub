@@ -67,7 +67,7 @@ export function ChatBubble({ message, onLongPress, onReplyPress, onReactPress }:
     <View style={[styles.container, isOwn && styles.containerOwn]}>
       {!isOwn && (
         <TouchableOpacity onPress={openSenderProfile} activeOpacity={0.8}>
-          <Avatar uri={message.sender_avatar} size={32} style={styles.avatar} />
+          <Avatar uri={message.sender_avatar} seed={message.sender_id} size={32} style={styles.avatar} />
         </TouchableOpacity>
       )}
       <View style={[styles.bubbleGroup, isOwn && styles.bubbleGroupOwn]}>

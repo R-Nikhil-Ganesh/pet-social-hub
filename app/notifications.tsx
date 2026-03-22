@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useNotificationStore } from '@/store/notificationStore';
 import api from '@/services/api';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { formatRelativeTime } from '@/utils/relativeTime';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -59,15 +60,6 @@ export default function NotificationsScreen() {
     }
   };
 
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h`;
-    return `${Math.floor(hrs / 24)}d`;
-  };
-
   const getMessage = (type: string, actorName: string, caption?: string) => {
     const postLabel = caption?.trim() ? `"${caption.trim().slice(0, 40)}${caption.trim().length > 40 ? '…' : ''}"` : 'your post';
     if (type === 'game_invite') return `${actorName} sent you an event group request`;
@@ -88,12 +80,12 @@ export default function NotificationsScreen() {
               style={styles.cardTop}
               onPress={() => handlePress(item.ref_id, item.ref_type)}
             >
-              <Avatar uri={item.actor?.avatar_url} size={42} />
+              <Avatar uri={item.actor?.avatar_url} seed={item.actor?.id ?? item.actor?.username ?? item.id} size={42} />
               <View style={styles.content}>
                 <ThemedText style={styles.message}>
                   {getMessage(item.type, item.actor?.display_name || 'Someone', item.post?.caption)}
                 </ThemedText>
-                <ThemedText style={styles.meta}>{timeAgo(item.created_at)}</ThemedText>
+                <ThemedText style={styles.meta}>{formatRelativeTime(item.created_at)}</ThemedText>
               </View>
             </TouchableOpacity>
 

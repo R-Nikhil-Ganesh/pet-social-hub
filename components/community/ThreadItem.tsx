@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Thread, useCommunityStore } from '@/store/communityStore';
+import { formatRelativeTime } from '@/utils/relativeTime';
 
 const FLAIRS: Record<string, { color: string; bg: string }> = {
   question: { color: '#2563EB', bg: '#EFF6FF' },
@@ -41,15 +42,6 @@ export function ThreadItem({ thread }: ThreadItemProps) {
       speed: 30,
       bounciness: 0,
     }).start();
-  };
-
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h`;
-    return `${Math.floor(hrs / 24)}d`;
   };
 
   return (
@@ -110,12 +102,12 @@ export function ThreadItem({ thread }: ThreadItemProps) {
         ) : null}
 
         <View style={styles.bottomRow}>
-          <Avatar uri={thread.avatar_url} size={18} />
+          <Avatar uri={thread.avatar_url} seed={thread.user_id} size={18} />
           <TouchableOpacity onPress={() => router.push(`/user/${thread.user_id}`)} activeOpacity={0.8}>
             <ThemedText style={styles.author}>{thread.display_name}</ThemedText>
           </TouchableOpacity>
           <ThemedText style={styles.sep}>·</ThemedText>
-          <ThemedText style={styles.time}>{timeAgo(thread.created_at)}</ThemedText>
+          <ThemedText style={styles.time}>{formatRelativeTime(thread.created_at)}</ThemedText>
           <ThemedText style={styles.sep}>·</ThemedText>
           <View style={styles.repliesWrap}>
             <Ionicons name="chatbubble-outline" size={12} color="#71717A" />
