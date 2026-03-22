@@ -4,12 +4,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PointsBadge } from '@/components/ui/PointsBadge';
+import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
 import { GameSession, TriviaQuestion } from '@/store/gameStore';
 import { useAuthStore } from '@/store/authStore';
 
@@ -65,7 +65,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
   if (session.status === 'waiting') {
     return (
       <View style={styles.waitingContainer}>
-        <ActivityIndicator size="large" color="#7C3AED" />
+        <SkeletonShimmer width={132} height={12} borderRadius={999} />
         <ThemedText style={styles.waitingText}>Finding opponent…</ThemedText>
         <TouchableOpacity style={styles.leaveBtn} onPress={onLeave}>
           <ThemedText style={styles.leaveBtnText}>Leave Queue</ThemedText>

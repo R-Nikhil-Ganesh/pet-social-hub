@@ -3,10 +3,8 @@ import {
   View,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
   RefreshControl,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +14,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { CommunityCard } from '@/components/community/CommunityCard';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
+import { TouchableScale } from '@/components/ui/TouchableScale';
 import { useCommunityStore } from '@/store/communityStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -85,16 +85,16 @@ export default function CommunityScreen() {
           returnKeyType="search"
         />
         {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn} accessibilityLabel="Clear search">
+          <TouchableScale onPress={() => setSearch('')} style={styles.clearBtn} accessibilityLabel="Clear search">
             <ThemedText style={styles.clearText}>✕</ThemedText>
-          </TouchableOpacity>
+          </TouchableScale>
         )}
       </View>
 
       {/* Tabs */}
       <View style={styles.tabRow}>
         {(['my', 'discover'] as Tab[]).map((tab) => (
-          <TouchableOpacity
+          <TouchableScale
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
@@ -103,7 +103,7 @@ export default function CommunityScreen() {
             <ThemedText style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
               {tab === 'my' ? 'My Communities' : 'Discover'}
             </ThemedText>
-          </TouchableOpacity>
+          </TouchableScale>
         ))}
       </View>
 
@@ -139,7 +139,13 @@ export default function CommunityScreen() {
             </View>
           ) : null
         }
-        ListFooterComponent={isMembersLoading ? <ActivityIndicator color={colors.brand.primary} style={styles.loader} /> : null}
+        ListFooterComponent={
+          isMembersLoading ? (
+            <View style={styles.loader}>
+              <SkeletonShimmer height={12} borderRadius={radius.pill} />
+            </View>
+          ) : null
+        }
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

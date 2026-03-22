@@ -3,13 +3,13 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,7 +79,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Button variant="ghost" style={styles.headerBtn} onPress={goBackOrProfile} label="Cancel" />

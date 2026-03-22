@@ -18,6 +18,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.bg.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border.soft,
     ...shadows.card,
   },
 });

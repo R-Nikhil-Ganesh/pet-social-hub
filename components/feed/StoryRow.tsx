@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StoryCircle } from './StoryCircle';
 import { Story, useFeedStore } from '@/store/feedStore';
 import { useAuthStore } from '@/store/authStore';
-import { ThemedText } from '@/components/ThemedText';
 
 export function StoryRow() {
   const router = useRouter();
@@ -54,8 +53,9 @@ export function StoryRow() {
                     breed: user.pet_profiles[0].breed,
                     age: user.pet_profiles[0].age,
                     photo_url: user.pet_profiles[0].photo_url,
+                    species: user.pet_profiles[0].species,
                   }
-                : { id: 0, name: '', breed: '', age: 0, photo_url: '' },
+                : { id: 0, name: '', breed: '', age: 0, photo_url: '', species: '' },
               media_url: '',
               media_type: 'image',
               expires_at: '',

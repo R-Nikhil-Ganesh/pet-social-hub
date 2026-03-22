@@ -3,7 +3,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,6 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { Avatar } from '@/components/ui/Avatar';
+import { TouchableScale } from '@/components/ui/TouchableScale';
 import { useGameStore, GameMode } from '@/store/gameStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
@@ -79,7 +79,7 @@ export default function GamesScreen() {
 
         {/* Streak Widget */}
         {totalChallenges > 0 && (
-          <TouchableOpacity onPress={() => router.push('/training')} activeOpacity={0.9}>
+          <TouchableScale onPress={() => router.push('/training')}>
             <Card style={styles.streakCard}>
               <View>
                 <View style={styles.streakTitleRow}>
@@ -99,7 +99,7 @@ export default function GamesScreen() {
                 ))}
               </View>
             </Card>
-          </TouchableOpacity>
+          </TouchableScale>
         )}
 
         {/* Game Cards */}
@@ -108,9 +108,16 @@ export default function GamesScreen() {
           {GAMES.length === 0 ? (
             <EmptyState iconName="game-controller-outline" iconColor={colors.text.secondary} title="No games available" subtitle="Please check back shortly." />
           ) : (
-            GAMES.map((mode) => (
-              <GameCard key={mode} mode={mode} onPress={() => handleGamePress(mode)} />
-            ))
+            <View style={styles.bentoGrid}>
+              {GAMES.map((mode) => (
+                <GameCard
+                  key={mode}
+                  mode={mode}
+                  onPress={() => handleGamePress(mode)}
+                  size={mode === 'trivia' ? 'wide' : 'square'}
+                />
+              ))}
+            </View>
           )}
         </View>
 
@@ -131,7 +138,7 @@ export default function GamesScreen() {
             </View>
             <Card style={styles.leaderboard}>
               {leaderboard.slice(0, 5).map((entry, index) => (
-                <TouchableOpacity
+                <TouchableScale
                   key={entry.user_id}
                   style={[
                     styles.leaderEntry,
@@ -146,7 +153,7 @@ export default function GamesScreen() {
                     <ThemedText variant="caption" style={styles.entryUsername}>@{entry.username}</ThemedText>
                   </View>
                   <PointsBadge points={entry.points} size="sm" />
-                </TouchableOpacity>
+                </TouchableScale>
               ))}
             </Card>
           </View>
@@ -205,6 +212,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginTop: spacing.xs,
     marginBottom: spacing.xxs,
+  },
+  bentoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
   sectionRow: {
     flexDirection: 'row',

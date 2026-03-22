@@ -4,9 +4,7 @@ import {
   View,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +18,8 @@ import { StoryRow } from '@/components/feed/StoryRow';
 import { EventGroupsBoard } from '@/components/feed/EventGroupsBoard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PointsBadge } from '@/components/ui/PointsBadge';
+import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
+import { TouchableScale } from '@/components/ui/TouchableScale';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { getSocket } from '@/services/socket';
 import { useFeedStore } from '@/store/feedStore';
@@ -171,7 +171,7 @@ export default function FeedScreen() {
             <ThemedText style={styles.appTitle}>Pawprint</ThemedText>
           </View>
           <View style={styles.topRight}>
-            <TouchableOpacity
+            <TouchableScale
               onPress={() => router.push('/notifications' as never)}
               style={styles.notifyBtn}
               accessibilityRole="button"
@@ -185,16 +185,16 @@ export default function FeedScreen() {
                   </ThemedText>
                 </View>
               )}
-            </TouchableOpacity>
+            </TouchableScale>
             <PointsBadge points={totalPoints} size="sm" onPress={() => router.push('/rewards')} />
-            <TouchableOpacity
+            <TouchableScale
               onPress={handleCreatePost}
               style={styles.createBtn}
               accessibilityRole="button"
               accessibilityLabel="Create a post"
             >
               <ThemedText style={styles.createBtnText}>＋</ThemedText>
-            </TouchableOpacity>
+            </TouchableScale>
           </View>
         </View>
       </AnimatedEntrance>
@@ -220,7 +220,7 @@ export default function FeedScreen() {
             />
           )}
           {TABS.map((tab) => (
-            <TouchableOpacity
+            <TouchableScale
               key={tab.key}
               onPress={() => handleTabPress(tab.key)}
               style={styles.tab}
@@ -231,7 +231,7 @@ export default function FeedScreen() {
               <ThemedText style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
                 {tab.label}
               </ThemedText>
-            </TouchableOpacity>
+            </TouchableScale>
           ))}
         </View>
       </AnimatedEntrance>
@@ -242,7 +242,7 @@ export default function FeedScreen() {
   const renderFooter = () =>
     isLoadingFeed && !refreshing ? (
       <View style={styles.loadingMore}>
-        <ActivityIndicator color={colors.brand.primary} />
+        <SkeletonShimmer width={96} height={10} borderRadius={radius.pill} />
       </View>
     ) : null;
 

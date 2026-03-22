@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  PressableProps,
-  StyleProp,
-  StyleSheet,
-  ViewStyle,
-  View,
-} from 'react-native';
+import { Pressable, PressableProps, StyleProp, StyleSheet, ViewStyle, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
+import { SkeletonShimmer } from './SkeletonShimmer';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -48,8 +41,12 @@ export function Button({
     >
       <View style={styles.inner}>
         {loading ? (
-          <ActivityIndicator
-            color={variant === 'primary' ? colors.text.inverse : colors.brand.primary}
+          <SkeletonShimmer
+            width={56}
+            height={12}
+            borderRadius={radius.pill}
+            baseColor={variant === 'primary' ? 'rgba(255,255,255,0.25)' : '#E9E7EF'}
+            highlightColor={variant === 'primary' ? 'rgba(255,255,255,0.6)' : '#F7F6FA'}
           />
         ) : (
           <ThemedText
@@ -70,7 +67,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     minHeight: 48,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
@@ -85,14 +82,14 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: colors.bg.surface,
     borderWidth: 1,
-    borderColor: colors.border.strong,
+    borderColor: colors.border.soft,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   pressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.995 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   disabled: {
     opacity: 0.65,

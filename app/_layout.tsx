@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
+import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
 
 export default function RootLayout() {
   const { isLoading, isAuthenticated, hydrate } = useAuthStore();
@@ -26,7 +27,7 @@ export default function RootLayout() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#7C3AED" />
+        <SkeletonShimmer width={140} height={14} borderRadius={999} />
       </View>
     );
   }
@@ -37,7 +38,6 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: true,
-          headerBackTitleVisible: false,
           headerStyle: {
             backgroundColor: '#ffffff',
           },

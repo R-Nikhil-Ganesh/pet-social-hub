@@ -10,6 +10,7 @@ interface GameCardProps {
   mode: GameMode;
   onPress: () => void;
   disabled?: boolean;
+  size?: 'wide' | 'square';
 }
 
 const GAME_META: Record<
@@ -42,13 +43,13 @@ const GAME_META: Record<
   },
 };
 
-export function GameCard({ mode, onPress, disabled }: GameCardProps) {
+export function GameCard({ mode, onPress, disabled, size = 'square' }: GameCardProps) {
   const meta = GAME_META[mode];
   const cardScale = useRef(new Animated.Value(1)).current;
 
   const onCardPressIn = () => {
     Animated.spring(cardScale, {
-      toValue: 0.985,
+      toValue: 0.97,
       useNativeDriver: true,
       speed: 36,
       bounciness: 0,
@@ -65,7 +66,7 @@ export function GameCard({ mode, onPress, disabled }: GameCardProps) {
   };
 
   return (
-    <Animated.View style={[styles.card, disabled && styles.disabled, { transform: [{ scale: cardScale }] }]}>
+    <Animated.View style={[styles.card, size === 'wide' ? styles.cardWide : styles.cardSquare, disabled && styles.disabled, { transform: [{ scale: cardScale }] }]}>
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.88}
@@ -77,10 +78,16 @@ export function GameCard({ mode, onPress, disabled }: GameCardProps) {
       >
         <LinearGradient
           colors={meta.gradient}
-          style={styles.gradient}
+          style={[styles.gradient, size === 'wide' ? styles.gradientWide : styles.gradientSquare]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.glossOverlay}
+          />
           <Ionicons name={meta.icon} size={34} color="#fff" style={styles.icon} />
           <View style={styles.textGroup}>
             <ThemedText style={styles.title}>{meta.title}</ThemedText>
@@ -97,19 +104,35 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.lg,
     overflow: 'hidden',
-    marginBottom: spacing.sm,
+    marginBottom: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
   },
+  cardWide: {
+    width: '100%',
+  },
+  cardSquare: {
+    width: '48.5%',
+  },
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 112,
+    position: 'relative',
     padding: spacing.lg,
     gap: spacing.sm,
+  },
+  gradientWide: {
+    minHeight: 128,
+  },
+  gradientSquare: {
+    minHeight: 118,
+    padding: spacing.md,
+  },
+  glossOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   icon: {
     width: 38,

@@ -13,18 +13,21 @@ const variantStyles = {
     fontSize: typography.size.xxl,
     lineHeight: 36,
     fontWeight: typography.weight.extrabold,
+    letterSpacing: typography.letterSpacing.header,
     color: colors.text.primary,
   },
   title: {
     fontSize: typography.size.xl,
     lineHeight: 30,
     fontWeight: typography.weight.bold,
+    letterSpacing: typography.letterSpacing.header,
     color: colors.text.primary,
   },
   body: {
     fontSize: typography.size.sm,
-    lineHeight: typography.lineHeight.base,
+    lineHeight: Math.round(typography.size.sm * 1.5),
     fontWeight: typography.weight.regular,
+    letterSpacing: typography.letterSpacing.body,
     color: colors.text.secondary,
   },
   caption: {

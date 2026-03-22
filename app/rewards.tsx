@@ -6,7 +6,6 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
 import { usePointsStore } from '@/store/pointsStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -57,7 +57,7 @@ export default function RewardsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.brand.primary} />
+        <SkeletonShimmer width={120} height={12} borderRadius={radius.pill} />
       </View>
     );
   }

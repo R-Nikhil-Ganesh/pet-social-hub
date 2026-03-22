@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Facepile } from '@/components/ui/Facepile';
 import { Community } from '@/store/communityStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -34,7 +35,7 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
           router.push(`/community/${communityId}`);
         }
       }}
-      activeOpacity={0.85}
+      activeOpacity={0.92}
       accessibilityRole="button"
     >
       <Card style={styles.card}>
@@ -64,7 +65,8 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
             {description}
           </ThemedText>
           <View style={styles.stats}>
-            <ThemedText style={styles.stat}>Members: {memberCount.toLocaleString()}</ThemedText>
+            <Facepile seed={communityId} size={24} count={3} />
+            <ThemedText style={styles.stat}>{memberCount.toLocaleString()} members</ThemedText>
             {unreadCount > 0 ? (
               <View style={styles.unreadBadge}>
                 <ThemedText style={styles.unreadText}>{unreadCount}</ThemedText>

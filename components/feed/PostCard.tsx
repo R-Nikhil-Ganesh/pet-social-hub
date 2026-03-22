@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PetTag } from '@/components/ui/PetTag';
@@ -27,6 +28,7 @@ export function PostCard({ post }: PostCardProps) {
   const reactToPost = useFeedStore((s) => s.reactToPost);
   const [showReactions, setShowReactions] = useState(false);
   const cardScale = useRef(new Animated.Value(1)).current;
+  const treatScale = useRef(new Animated.Value(1)).current;
   const reactionAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export function PostCard({ post }: PostCardProps) {
 
   const onCardPressIn = () => {
     Animated.spring(cardScale, {
-      toValue: 0.985,
+      toValue: 0.97,
       useNativeDriver: true,
       speed: 36,
       bounciness: 0,
@@ -57,6 +59,21 @@ export function PostCard({ post }: PostCardProps) {
       useNativeDriver: true,
       speed: 30,
       bounciness: 0,
+    }).start();
+  };
+
+  const handleTreat = () => {
+    reactToPost(post.id);
+    setShowReactions(false);
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+
+    treatScale.setValue(0.86);
+    Animated.spring(treatScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 22,
+      bounciness: 12,
     }).start();
   };
 
@@ -96,7 +113,16 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Caption */}
       {post.caption ? (
-        <ThemedText style={styles.caption}>{post.caption}</ThemedText>
+        <View style={[styles.captionWrap, !post.media_url && styles.textOnlyCaptionWrap]}>
+          {!post.media_url ? (
+            <>
+              <View style={[styles.blob, styles.blobA]} />
+              <View style={[styles.blob, styles.blobB]} />
+              <View style={[styles.blob, styles.blobC]} />
+            </>
+          ) : null}
+          <ThemedText style={styles.caption}>{post.caption}</ThemedText>
+        </View>
       ) : null}
 
       {/* Media */}
@@ -127,14 +153,16 @@ export function PostCard({ post }: PostCardProps) {
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.actionBtn}
-          onPress={() => setShowReactions(!showReactions)}
+          onPress={handleTreat}
           onLongPress={() => setShowReactions(true)}
           onPressIn={onCardPressIn}
           onPressOut={onCardPressOut}
         >
-          <ThemedText style={styles.actionIcon}>
-            {post.user_reacted ? '🐾' : '🤍'}
-          </ThemedText>
+          <Animated.View style={{ transform: [{ scale: treatScale }] }}>
+            <ThemedText style={styles.actionIcon}>
+              {post.user_reacted ? '🐾' : '🤍'}
+            </ThemedText>
+          </Animated.View>
           <ThemedText style={styles.actionCount}>{post.reaction_count}</ThemedText>
         </TouchableOpacity>
 
@@ -182,8 +210,7 @@ export function PostCard({ post }: PostCardProps) {
               key={emoji}
               style={styles.reactionBtn}
               onPress={() => {
-                reactToPost(post.id);
-                setShowReactions(false);
+                handleTreat();
               }}
             >
               <ThemedText style={styles.reactionEmoji}>{emoji}</ThemedText>
@@ -254,6 +281,41 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 14,
     paddingBottom: 10,
+  },
+  captionWrap: {
+    position: 'relative',
+  },
+  textOnlyCaptionWrap: {
+    marginHorizontal: 14,
+    marginBottom: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(249,115,22,0.025)',
+  },
+  blob: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(249,115,22,0.05)',
+  },
+  blobA: {
+    width: 90,
+    height: 70,
+    top: -10,
+    left: -20,
+  },
+  blobB: {
+    width: 120,
+    height: 92,
+    right: -28,
+    bottom: -18,
+    backgroundColor: 'rgba(225,29,72,0.03)',
+  },
+  blobC: {
+    width: 62,
+    height: 62,
+    top: 14,
+    right: 52,
+    backgroundColor: 'rgba(14,165,165,0.03)',
   },
   media: {
     width: SCREEN_WIDTH - 32,

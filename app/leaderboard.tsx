@@ -4,11 +4,11 @@ import {
   StyleSheet,
   FlatList,
   SafeAreaView,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
+import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
 import { useGameStore } from '@/store/gameStore';
 
 export default function LeaderboardScreen() {
@@ -29,7 +29,7 @@ export default function LeaderboardScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#7C3AED" />
+        <SkeletonShimmer width={100} height={12} borderRadius={999} />
       </View>
     );
   }

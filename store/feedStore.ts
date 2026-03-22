@@ -7,6 +7,7 @@ export interface PetMeta {
   breed: string;
   age: number;
   photo_url: string;
+  species?: string;
 }
 
 export interface Post {
@@ -340,11 +341,15 @@ function normalizeStory(story: any): Story {
     breed: story.pet_breed || 'Pet',
     age: Number(story.pet_age ?? 0),
     photo_url: story.pet_photo_url || '',
+    species: story.pet_species || '',
   };
 
   return {
     ...story,
-    pet,
+    pet: {
+      ...pet,
+      species: story.pet?.species || pet.species || story.pet_species || '',
+    },
     viewed: Boolean(story.viewed),
   };
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -10,45 +10,33 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { AnimatedEntrance } from '@/components/ui/AnimatedEntrance';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PetTag } from '@/components/ui/PetTag';
 import { PointsBadge } from '@/components/ui/PointsBadge';
-import { PostCard } from '@/components/feed/PostCard';
+import { MenuPopover, MenuOption } from '@/components/ui/MenuPopover';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
-import api from '@/services/api';
-import { Post } from '@/store/feedStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { totalPoints, fetchPoints } = usePointsStore();
-  const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-
-  const loadMyPosts = useCallback(async () => {
-    try {
-      const { data } = await api.get('/users/me/posts');
-      setMyPosts(data.posts ?? []);
-    } catch {}
-  }, []);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     fetchPoints();
-    loadMyPosts();
-  }, [fetchPoints, loadMyPosts]);
+  }, [fetchPoints]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchPoints(), loadMyPosts()]);
+    await fetchPoints();
     setRefreshing(false);
   };
 
@@ -70,12 +58,28 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const menuOptions: MenuOption[] = [
+    { label: 'My Posts', onPress: () => router.push('/my-posts' as never) },
+    { label: 'Edit Profile', onPress: () => router.push('/edit-profile') },
+    { label: 'Settings', onPress: () => router.push('/settings') },
+    { label: 'Sign Out', destructive: true, onPress: handleLogout },
+  ];
+
+  const openProfileMenu = () => {
+    setMenuVisible(true);
+  };
+
   if (!user) return null;
 
   const isProfessional = Boolean(user.is_professional);
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <MenuPopover
+        visible={menuVisible}
+        onDismiss={() => setMenuVisible(false)}
+        options={menuOptions}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -85,108 +89,108 @@ export default function ProfileScreen() {
         {/* Top bar */}
         <AnimatedEntrance delay={20}>
           <View style={styles.topBar}>
-            <ThemedText variant="title" style={styles.topTitle}>My Profile</ThemedText>
+            <ThemedText variant="title" style={styles.topTitle}>Me</ThemedText>
             <View style={styles.topActions}>
-              <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconBtn} accessibilityRole="button" accessibilityLabel="Open settings">
-                <Ionicons name="settings-outline" size={20} color={colors.text.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleLogout} style={styles.iconBtn} accessibilityRole="button" accessibilityLabel="Sign out">
-                <Ionicons name="log-out-outline" size={20} color={colors.text.primary} />
+              <TouchableOpacity
+                onPress={openProfileMenu}
+                style={styles.iconBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Open profile menu"
+              >
+                <Ionicons name="ellipsis-horizontal" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
           </View>
         </AnimatedEntrance>
 
-        {/* Profile Hero */}
+        {/* Top Card */}
         <AnimatedEntrance delay={80}>
-          <LinearGradient colors={['#F97316', '#FB7185']} style={styles.hero}>
-            <Avatar
-              uri={user.avatar_url}
-              size={84}
-              isProfessional={isProfessional}
-              style={styles.heroAvatar}
-            />
-            <View style={styles.heroInfo}>
-              <ThemedText style={styles.displayName}>{user.display_name}</ThemedText>
-              <ThemedText style={styles.username}>@{user.username}</ThemedText>
-              {isProfessional && (
-                <View style={styles.proBadge}>
-                  <View style={styles.proRow}>
-                    <Ionicons name="checkmark" size={12} color={colors.text.inverse} />
-                    <ThemedText style={styles.proText}>{user.professional_type ?? 'Professional'}</ThemedText>
-                  </View>
+          <View style={styles.heroShell}>
+            <View style={styles.heroGlass}>
+            <View style={styles.heroTint} />
+            <View style={styles.heroTopRow}>
+                <View style={styles.avatarGlowWrap}>
+                  <Avatar
+                    uri={user.avatar_url}
+                    size={84}
+                    isProfessional={isProfessional}
+                    style={styles.heroAvatar}
+                  />
                 </View>
-              )}
-              {user.bio ? (
-                <ThemedText style={styles.bio}>{user.bio}</ThemedText>
-              ) : null}
+              <View style={styles.heroInfo}>
+                <ThemedText style={styles.displayName}>{user.display_name}</ThemedText>
+                <ThemedText style={styles.username}>@{user.username}</ThemedText>
+                {isProfessional && (
+                  <View style={styles.proBadge}>
+                    <View style={styles.proRow}>
+                      <Ionicons name="checkmark" size={12} color={colors.text.inverse} />
+                      <ThemedText style={styles.proText}>{user.professional_type ?? 'Professional'}</ThemedText>
+                    </View>
+                  </View>
+                )}
+              </View>
             </View>
-          </LinearGradient>
-        </AnimatedEntrance>
 
-        {/* Stats Row */}
-        <AnimatedEntrance delay={130}>
-          <View style={styles.statsRow}>
-            <View style={styles.statBlock}>
-              <ThemedText variant="title" style={styles.statValue}>{myPosts.length}</ThemedText>
-              <ThemedText variant="caption" style={styles.statLabel}>Posts</ThemedText>
+            {user.bio ? (
+              <ThemedText style={styles.bio}>{user.bio}</ThemedText>
+            ) : null}
+
+            <View style={styles.heroStatsRow}>
+              <TouchableOpacity
+                style={styles.heroStatPill}
+                onPress={() =>
+                  router.push({ pathname: '/followers/[id]', params: { id: String(user.id) } } as never)
+                }
+                accessibilityRole="button"
+                accessibilityLabel="Open followers list"
+              >
+                <ThemedText style={styles.heroStatValue}>{user.follower_count}</ThemedText>
+                <ThemedText style={styles.heroStatLabel}>Followers</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.heroStatPill}
+                onPress={() =>
+                  router.push({ pathname: '/following/[id]', params: { id: String(user.id) } } as never)
+                }
+                accessibilityRole="button"
+                accessibilityLabel="Open following list"
+              >
+                <ThemedText style={styles.heroStatValue}>{user.following_count}</ThemedText>
+                <ThemedText style={styles.heroStatLabel}>Following</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.heroStatPill}
+                onPress={() => router.push('/rewards')}
+                accessibilityRole="button"
+                accessibilityLabel="Open rewards"
+              >
+                <PointsBadge points={totalPoints} size="sm" />
+                <ThemedText style={styles.heroStatLabel}>Points</ThemedText>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statDivider} />
-            <TouchableOpacity
-              style={styles.statBlock}
-              onPress={() =>
-                router.push({ pathname: '/followers/[id]', params: { id: String(user.id) } } as never)
-              }
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Open followers list"
-            >
-              <ThemedText variant="title" style={styles.statValue}>{user.follower_count}</ThemedText>
-              <ThemedText variant="caption" style={styles.statLabel}>Followers</ThemedText>
-            </TouchableOpacity>
-            <View style={styles.statDivider} />
-            <TouchableOpacity
-              style={styles.statBlock}
-              onPress={() =>
-                router.push({ pathname: '/following/[id]', params: { id: String(user.id) } } as never)
-              }
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Open following list"
-            >
-              <ThemedText variant="title" style={styles.statValue}>{user.following_count}</ThemedText>
-              <ThemedText variant="caption" style={styles.statLabel}>Following</ThemedText>
-            </TouchableOpacity>
-            <View style={styles.statDivider} />
-            <TouchableOpacity style={styles.statBlock} onPress={() => router.push('/rewards')} accessibilityRole="button" accessibilityLabel="Open rewards">
-              <PointsBadge points={totalPoints} size="sm" />
-              <ThemedText variant="caption" style={styles.statLabel}>Points</ThemedText>
-            </TouchableOpacity>
+
+            <View style={styles.heroActionsRow}>
+              <Button
+                style={styles.editBtn}
+                variant="secondary"
+                label="Edit Profile"
+                onPress={() => router.push('/edit-profile')}
+                accessibilityLabel="Edit profile"
+              />
+              <Button
+                style={styles.managePetsBtn}
+                variant="secondary"
+                label="Manage Pets"
+                onPress={() => router.push('/my-pets')}
+                accessibilityLabel="Manage pets"
+              />
+            </View>
+            </View>
           </View>
-        </AnimatedEntrance>
-
-        {/* Edit Profile */}
-        <AnimatedEntrance delay={170}>
-          <Button
-            style={styles.editBtn}
-            variant="secondary"
-            label="Edit Profile"
-            onPress={() => router.push('/edit-profile')}
-            accessibilityLabel="Edit profile"
-          />
-        </AnimatedEntrance>
-
-        <AnimatedEntrance delay={210}>
-          <Button
-            style={styles.managePetsBtn}
-            variant="secondary"
-            label="Manage Pets"
-            onPress={() => router.push('/my-pets')}
-            accessibilityLabel="Manage pets"
-          />
         </AnimatedEntrance>
 
         {/* Pet Profiles */}
+        <AnimatedEntrance delay={140}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <ThemedText variant="title" style={styles.sectionTitle}>My Pets</ThemedText>
@@ -223,40 +227,18 @@ export default function ProfileScreen() {
               accessibilityRole="button"
               accessibilityLabel="Add your first pet"
             >
-              <Card style={styles.emptyPetsCard}>
+              <View style={styles.emptyPetsCard}>
                 <EmptyState
                   iconName="paw-outline"
                   iconColor={colors.text.secondary}
                   title="No pets added yet"
                   subtitle="Tap to add your first pet profile"
                 />
-              </Card>
+                </View>
             </TouchableOpacity>
           )}
         </View>
-
-        {/* Posts Section */}
-        <View style={styles.section}>
-          <ThemedText variant="title" style={styles.sectionTitle}>My Posts</ThemedText>
-          {myPosts.length === 0 ? (
-            <Card style={styles.emptyPosts}>
-              <EmptyState
-                iconName="images-outline"
-                iconColor={colors.text.secondary}
-                title="No posts yet"
-                subtitle="Share your pet first moment with the community!"
-              />
-              <Button
-                style={styles.createPostBtn}
-                label="Create Post"
-                onPress={() => router.push('/create-post')}
-                accessibilityLabel="Create your first post"
-              />
-            </Card>
-          ) : (
-            myPosts.map((post) => <PostCard key={post.id} post={post} />)
-          )}
-        </View>
+        </AnimatedEntrance>
 
         <View style={{ height: 20 }} />
       </ScrollView>
@@ -287,15 +269,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconBtnText: { fontSize: 18 },
-  hero: {
-    flexDirection: 'row',
+  heroShell: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border.soft,
+  },
+  heroGlass: {
     padding: spacing.lg,
+    backgroundColor: 'rgba(249,115,22,0.85)',
+  },
+  heroTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(249,115,22,0.5)',
+  },
+  hero: {
     gap: spacing.md,
-    alignItems: 'flex-start',
+  },
+  heroTopRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  avatarGlowWrap: {
+    borderRadius: 50,
+    padding: 4,
+    shadowColor: colors.brand.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 4,
   },
   heroAvatar: {
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: '#FFFFFF',
   },
   heroInfo: { flex: 1, gap: 5 },
   displayName: { fontSize: typography.size.xl, fontWeight: typography.weight.extrabold, color: colors.text.inverse },
@@ -310,33 +315,40 @@ const styles = StyleSheet.create({
   proText: { fontSize: 11, color: colors.text.inverse, fontWeight: typography.weight.bold },
   proRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   bio: { fontSize: 13, color: 'rgba(255,255,255,0.9)', lineHeight: 20 },
-  statsRow: {
+  heroStatsRow: {
     flexDirection: 'row',
-    backgroundColor: colors.bg.surface,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border.soft,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
-  statBlock: {
+  heroStatPill: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    gap: 3,
+    minHeight: 54,
+    gap: 4,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.38)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
   },
-  statValue: { color: colors.text.primary },
-  statLabel: { color: colors.text.secondary, fontSize: typography.size.xs },
-  statDivider: { width: StyleSheet.hairlineWidth, backgroundColor: colors.border.soft, marginVertical: 4 },
+  heroStatValue: { color: colors.text.inverse, fontSize: typography.size.md, fontWeight: typography.weight.bold },
+  heroStatLabel: { color: 'rgba(255,255,255,0.92)', fontSize: typography.size.xs },
+  heroActionsRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   editBtn: {
-    margin: spacing.md,
+    flex: 1,
     borderColor: colors.brand.primary,
+    backgroundColor: 'rgba(255,255,255,0.95)',
   },
   managePetsBtn: {
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.xs,
+    flex: 1,
     borderColor: colors.border.strong,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
-  section: { paddingHorizontal: spacing.md, marginBottom: spacing.xs },
+  section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -365,15 +377,11 @@ const styles = StyleSheet.create({
   petPhotoEmoji: { fontSize: 32 },
   petName: { fontSize: 13, fontWeight: typography.weight.bold, color: colors.text.primary, textAlign: 'center' },
   emptyPetsCard: {
+    backgroundColor: colors.bg.surface,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border.soft,
     borderRadius: radius.md,
     overflow: 'hidden',
   },
-  emptyPosts: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-    borderRadius: radius.lg,
-  },
-  createPostBtn: { marginTop: spacing.xs },
 });

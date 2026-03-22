@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
   },
   input: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border.soft,
     borderRadius: radius.md,
     minHeight: 48,
