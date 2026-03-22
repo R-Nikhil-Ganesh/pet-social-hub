@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import {
@@ -91,7 +92,8 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionTitle}>🎉 Event Groups</ThemedText>
+        <Ionicons name="calendar-outline" size={16} color="#18181B" />
+        <ThemedText style={styles.sectionTitle}>Event Groups</ThemedText>
         <ThemedText style={styles.sectionSubtitle}>Create private groups for events</ThemedText>
       </View>
 
@@ -102,7 +104,10 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
             <View style={styles.eventBody}>
               <ThemedText style={styles.eventDate}>{formatStartsAt(event.starts_at)}</ThemedText>
               <ThemedText style={styles.eventTitle}>{event.title}</ThemedText>
-              <ThemedText style={styles.eventLocation}>📍 {event.location_name || 'Location TBA'}</ThemedText>
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={12} color="#52525B" />
+                <ThemedText style={styles.eventLocation}>{event.location_name || 'Location TBA'}</ThemedText>
+              </View>
               <ThemedText style={styles.eventDescription} numberOfLines={2}>
                 {event.description}
               </ThemedText>
@@ -144,7 +149,7 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
 
               {event.joined_groups.length > 0 && (
                 <View style={styles.groupListWrap}>
-                  <ThemedText style={styles.groupListTitle}>You're in</ThemedText>
+                  <ThemedText style={styles.groupListTitle}>You are in</ThemedText>
                   {event.joined_groups.map((group) => (
                     <TouchableOpacity
                       key={group.id}
@@ -216,7 +221,7 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
                     </View>
                     <View style={styles.connectionRight}>
                       <ThemedText style={styles.connectionRole}>{relationLabel(item)}</ThemedText>
-                      <ThemedText style={styles.connectionCheck}>{selected ? '✓' : '○'}</ThemedText>
+                      <Ionicons name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={selected ? '#7C3AED' : '#A1A1AA'} />
                     </View>
                   </TouchableOpacity>
                 );
@@ -307,6 +312,11 @@ const styles = StyleSheet.create({
   eventLocation: {
     fontSize: 12,
     color: '#52525B',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   eventDescription: {
     fontSize: 12,

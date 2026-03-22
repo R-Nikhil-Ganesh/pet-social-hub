@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import {
   View,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
+import { AnimatedEntrance } from '@/components/ui/AnimatedEntrance';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/authStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -104,61 +108,58 @@ export default function RegisterScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient colors={['#F5F3FF', '#EDE9FE', '#fff']} style={styles.flex}>
+      <LinearGradient colors={['#FFF4E8', '#FFF9F2', '#fff']} style={styles.flex}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.hero}>
-            <ThemedText style={styles.logo}>🐾</ThemedText>
-            <ThemedText style={styles.appName}>Join Pawprint</ThemedText>
-            <ThemedText style={styles.tagline}>Your pet's social life starts here</ThemedText>
-          </View>
+          <AnimatedEntrance delay={30}>
+            <View style={styles.hero}>
+              <Ionicons name="paw" size={44} color={colors.brand.primary} />
+              <ThemedText variant="title" style={styles.appName}>Join Pawprint</ThemedText>
+              <ThemedText variant="body" style={styles.tagline}>Your pet social life starts here</ThemedText>
+            </View>
+          </AnimatedEntrance>
 
-          <View style={styles.form}>
-            <ThemedText style={styles.heading}>Create account</ThemedText>
+          <AnimatedEntrance delay={120}>
+            <Card style={styles.form}>
+              <ThemedText variant="title" style={styles.heading}>Create account</ThemedText>
 
-            {fields.map(({ key, label, placeholder, secure, keyboard, autoCapitalize }) => (
-              <View key={key} style={styles.inputGroup}>
-                <ThemedText style={styles.label}>{label}</ThemedText>
-                <TextInput
-                  style={styles.input}
+              {fields.map(({ key, label, placeholder, secure, keyboard, autoCapitalize }) => (
+                <Input
+                  key={key}
+                  label={label}
                   value={form[key]}
                   onChangeText={(val) => updateField(key, val)}
                   placeholder={placeholder}
-                  placeholderTextColor="#A1A1AA"
                   secureTextEntry={secure}
                   keyboardType={keyboard ?? 'default'}
                   autoCapitalize={autoCapitalize ?? 'none'}
                   returnKeyType="next"
+                  textContentType={key === 'email' ? 'emailAddress' : key.includes('password') ? 'password' : 'none'}
                 />
-              </View>
-            ))}
+              ))}
 
-            <TouchableOpacity
-              style={[styles.btn, loading && styles.btnDisabled]}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <ThemedText style={styles.btnText}>Create Account</ThemedText>
-              )}
-            </TouchableOpacity>
+              <Button
+                label="Create Account"
+                onPress={handleRegister}
+                loading={loading}
+                accessibilityLabel="Create your Pawprint account"
+              />
 
-            {errorText ? <ThemedText style={styles.errorText}>{errorText}</ThemedText> : null}
+              {errorText ? <ThemedText variant="caption" style={styles.errorText}>{errorText}</ThemedText> : null}
 
-            <TouchableOpacity
-              style={styles.secondaryBtn}
-              onPress={() => router.back()}
-            >
-              <ThemedText style={styles.secondaryText}>
-                Already have an account?{' '}
-                <ThemedText style={styles.linkText}>Sign in</ThemedText>
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.secondaryBtn}
+                onPress={() => router.back()}
+              >
+                <ThemedText variant="body" style={styles.secondaryText}>
+                  Already have an account?{' '}
+                  <ThemedText variant="label" style={styles.linkText}>Sign in</ThemedText>
+                </ThemedText>
+              </TouchableOpacity>
+            </Card>
+          </AnimatedEntrance>
         </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>
@@ -167,45 +168,19 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingTop: 40 },
-  hero: { alignItems: 'center', marginBottom: 28, gap: 6 },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.xl, paddingTop: 40 },
+  hero: { alignItems: 'center', marginBottom: 28, gap: spacing.xs },
   logo: { fontSize: 48 },
-  appName: { fontSize: 28, fontWeight: '800', color: '#7C3AED', letterSpacing: -0.5 },
-  tagline: { fontSize: 14, color: '#71717A' },
+  appName: { color: colors.brand.primary, letterSpacing: -0.5 },
+  tagline: { color: colors.text.secondary },
   form: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
     gap: 14,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 6,
   },
-  heading: { fontSize: 20, fontWeight: '800', color: '#18181B', marginBottom: 4 },
-  inputGroup: { gap: 5 },
-  label: { fontSize: 13, fontWeight: '600', color: '#52525B' },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
-    padding: 13,
-    fontSize: 15,
-    color: '#18181B',
-    backgroundColor: '#FAFAFA',
-  },
-  btn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 14,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  btnDisabled: { opacity: 0.7 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  errorText: { color: '#DC2626', fontSize: 13, fontWeight: '600' },
-  secondaryBtn: { alignItems: 'center', paddingVertical: 4 },
-  secondaryText: { fontSize: 14, color: '#52525B' },
-  linkText: { color: '#7C3AED', fontWeight: '700' },
+  heading: { marginBottom: spacing.xs },
+  errorText: { color: colors.state.danger },
+  secondaryBtn: { alignItems: 'center', paddingVertical: spacing.xxs, minHeight: 44, justifyContent: 'center' },
+  secondaryText: { fontSize: typography.size.sm, color: colors.text.secondary },
+  linkText: { color: colors.brand.primary, fontWeight: typography.weight.bold },
 });

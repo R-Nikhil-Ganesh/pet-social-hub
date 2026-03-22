@@ -8,10 +8,14 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  TextInput,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { usePointsStore } from '@/store/pointsStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function RewardsScreen() {
   const { totalPoints: points, transactions, rewards, fetchPoints, fetchTransactions, fetchRewards, redeemReward } =
@@ -24,11 +28,11 @@ export default function RewardsScreen() {
     Promise.all([fetchPoints(), fetchTransactions(), fetchRewards()]).finally(() =>
       setLoading(false)
     );
-  }, []);
+  }, [fetchPoints, fetchTransactions, fetchRewards]);
 
   const handleRedeem = async (rewardId: number, cost: number) => {
     if (points < cost) {
-      Alert.alert('Not enough points', `You need ${cost} 🐾 pts to redeem this.`);
+      Alert.alert('Not enough points', `You need ${cost} pts to redeem this.`);
       return;
     }
     Alert.alert('Redeem reward?', `This costs ${cost} pts.`, [
@@ -39,7 +43,7 @@ export default function RewardsScreen() {
           setRedeeming(rewardId);
           try {
             await redeemReward(rewardId);
-            Alert.alert('🎉 Redeemed!', 'Your reward has been unlocked.');
+            Alert.alert('Redeemed!', 'Your reward has been unlocked.');
           } catch {
             Alert.alert('Error', 'Could not redeem. Try again.');
           } finally {
@@ -53,7 +57,7 @@ export default function RewardsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#7C3AED" />
+        <ActivityIndicator color={colors.brand.primary} />
       </View>
     );
   }
@@ -62,8 +66,11 @@ export default function RewardsScreen() {
     <SafeAreaView style={styles.container}>
       {/* Points header */}
       <View style={styles.pointsHeader}>
-        <ThemedText style={styles.pointsLabel}>Your Points</ThemedText>
-        <ThemedText style={styles.pointsValue}>🐾 {points.toLocaleString()} pts</ThemedText>
+        <ThemedText variant="label" style={styles.pointsLabel}>Your Points</ThemedText>
+        <View style={styles.pointsRow}>
+          <Ionicons name="paw" size={24} color="#DDD6FE" />
+          <ThemedText variant="display" style={styles.pointsValue}>{points.toLocaleString()} pts</ThemedText>
+        </View>
       </View>
 
       {/* Tab toggle */}
@@ -71,7 +78,7 @@ export default function RewardsScreen() {
         {(['rewards', 'history'] as const).map((t) => (
           <TouchableOpacity key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
             <ThemedText style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'rewards' ? '🎁 Rewards' : '📜 History'}
+              {t === 'rewards' ? 'Rewards' : 'History'}
             </ThemedText>
           </TouchableOpacity>
         ))}
@@ -82,33 +89,31 @@ export default function RewardsScreen() {
           data={rewards}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<ThemedText style={styles.emptyText}>No rewards available.</ThemedText>}
+          ListEmptyComponent={
+            <EmptyState iconName="gift-outline" iconColor={colors.text.secondary} title="No rewards available" subtitle="Check back soon for new rewards." />
+          }
           renderItem={({ item }) => (
-            <View style={styles.rewardCard}>
+            <Card style={styles.rewardCard}>
               {item.image_url ? (
                 <Image source={{ uri: item.image_url }} style={styles.rewardImage} />
               ) : (
                 <View style={[styles.rewardImage, styles.rewardImageFallback]}>
-                  <ThemedText style={{ fontSize: 32 }}>🎁</ThemedText>
+                  <Ionicons name="gift-outline" size={30} color={colors.brand.primary} />
                 </View>
               )}
               <View style={styles.rewardInfo}>
-                <ThemedText style={styles.rewardTitle}>{item.title}</ThemedText>
-                <ThemedText style={styles.rewardDesc}>{item.description}</ThemedText>
-                <ThemedText style={styles.rewardCost}>🐾 {item.points_cost} pts</ThemedText>
+                <ThemedText variant="label" style={styles.rewardTitle}>{item.title}</ThemedText>
+                <ThemedText variant="caption" style={styles.rewardDesc}>{item.description}</ThemedText>
+                <ThemedText variant="label" style={styles.rewardCost}>{item.points_cost} pts</ThemedText>
               </View>
-              <TouchableOpacity
+              <Button
                 style={[styles.redeemBtn, points < item.points_cost && styles.redeemBtnDisabled]}
+                label="Redeem"
                 onPress={() => handleRedeem(item.id, item.points_cost)}
-                disabled={redeeming === item.id}
-              >
-                {redeeming === item.id ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <ThemedText style={styles.redeemBtnText}>Redeem</ThemedText>
-                )}
-              </TouchableOpacity>
-            </View>
+                loading={redeeming === item.id}
+                disabled={points < item.points_cost}
+              />
+            </Card>
           )}
         />
       ) : (
@@ -116,12 +121,12 @@ export default function RewardsScreen() {
           data={transactions}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<ThemedText style={styles.emptyText}>No transactions yet.</ThemedText>}
+          ListEmptyComponent={<EmptyState iconName="document-text-outline" iconColor={colors.text.secondary} title="No transactions yet" />}
           renderItem={({ item }) => (
-            <View style={styles.txRow}>
+            <Card style={styles.txRow}>
               <View style={styles.txLeft}>
-                <ThemedText style={styles.txAction}>{item.action}</ThemedText>
-                <ThemedText style={styles.txDate}>
+                <ThemedText variant="label" style={styles.txAction}>{item.action}</ThemedText>
+                <ThemedText variant="caption" style={styles.txDate}>
                   {new Date(item.created_at).toLocaleDateString()}
                 </ThemedText>
               </View>
@@ -131,7 +136,7 @@ export default function RewardsScreen() {
                 {item.amount > 0 ? '+' : ''}
                 {item.amount} pts
               </ThemedText>
-            </View>
+            </Card>
           )}
         />
       )}
@@ -140,71 +145,56 @@ export default function RewardsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9FB' },
+  container: { flex: 1, backgroundColor: colors.bg.app },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   pointsHeader: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.brand.primary,
     paddingVertical: 22,
     alignItems: 'center',
     gap: 4,
   },
-  pointsLabel: { fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: '600' },
-  pointsValue: { fontSize: 30, color: '#fff', fontWeight: '900' },
+  pointsLabel: { color: 'rgba(255,255,255,0.85)', fontWeight: typography.weight.semibold },
+  pointsValue: { color: colors.text.inverse, fontSize: 30, fontWeight: typography.weight.extrabold },
+  pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.bg.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
+    borderBottomColor: colors.border.soft,
   },
-  tab: { flex: 1, paddingVertical: 14, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: '#7C3AED' },
-  tabText: { fontSize: 14, color: '#71717A', fontWeight: '600' },
-  tabTextActive: { color: '#7C3AED' },
-  list: { padding: 14, gap: 12 },
-  emptyText: { textAlign: 'center', color: '#71717A', marginTop: 30 },
+  tab: { flex: 1, minHeight: 48, borderRadius: 0 },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: colors.brand.primary, backgroundColor: colors.bg.subtle },
+  tabText: { fontSize: typography.size.sm, color: colors.text.secondary, fontWeight: typography.weight.semibold },
+  tabTextActive: { color: colors.brand.primary },
+  list: { padding: spacing.sm, gap: spacing.sm },
   rewardCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 12,
-    gap: 12,
+    borderRadius: radius.lg,
+    padding: spacing.sm,
+    gap: spacing.sm,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
   },
   rewardImage: { width: 64, height: 64, borderRadius: 12 },
-  rewardImageFallback: { backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center' },
+  rewardImageFallback: { backgroundColor: colors.bg.subtle, alignItems: 'center', justifyContent: 'center' },
   rewardInfo: { flex: 1, gap: 3 },
-  rewardTitle: { fontSize: 14, fontWeight: '700', color: '#18181B' },
-  rewardDesc: { fontSize: 12, color: '#71717A', lineHeight: 16 },
-  rewardCost: { fontSize: 12, fontWeight: '700', color: '#7C3AED', marginTop: 2 },
+  rewardTitle: { color: colors.text.primary },
+  rewardDesc: { color: colors.text.secondary, lineHeight: 16 },
+  rewardCost: { color: colors.brand.primary, marginTop: 2, fontSize: typography.size.xs },
   redeemBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minWidth: 68,
-    alignItems: 'center',
+    minWidth: 92,
+    minHeight: 44,
   },
-  redeemBtnDisabled: { backgroundColor: '#D4D4D8' },
-  redeemBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  redeemBtnDisabled: { backgroundColor: colors.border.strong },
   txRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: radius.md,
+    padding: spacing.sm,
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
   },
   txLeft: { gap: 2 },
-  txAction: { fontSize: 14, fontWeight: '600', color: '#18181B' },
-  txDate: { fontSize: 12, color: '#71717A' },
+  txAction: { color: colors.text.primary },
+  txDate: { color: colors.text.secondary },
   txAmount: { fontSize: 15, fontWeight: '800' },
   txPositive: { color: '#22C55E' },
   txNegative: { color: '#EF4444' },

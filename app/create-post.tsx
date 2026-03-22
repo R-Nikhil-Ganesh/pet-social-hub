@@ -128,7 +128,7 @@ export default function CreatePostScreen() {
           {/* Caption */}
           <TextInput
             style={styles.captionInput}
-            placeholder="What's your pet up to? 🐾"
+            placeholder="What's your pet up to?"
             placeholderTextColor="#A1A1AA"
             value={caption}
             onChangeText={setCaption}
@@ -146,14 +146,14 @@ export default function CreatePostScreen() {
             </View>
           ) : (
             <TouchableOpacity style={styles.mediaPicker} onPress={pickMedia}>
-              <ThemedText style={styles.mediaPickerIcon}>📷</ThemedText>
+              <ThemedText style={styles.mediaPickerIcon}>+</ThemedText>
               <ThemedText style={styles.mediaPickerText}>Add Photo / Video</ThemedText>
             </TouchableOpacity>
           )}
 
           {/* Location */}
           <View style={styles.field}>
-            <ThemedText style={styles.fieldLabel}>📍 Location</ThemedText>
+            <ThemedText style={styles.fieldLabel}>Location</ThemedText>
             <TextInput
               style={styles.fieldInput}
               placeholder="City, park, vet..."
@@ -167,7 +167,7 @@ export default function CreatePostScreen() {
           {/* Pet selector */}
           {user?.pet_profiles && user.pet_profiles.length > 0 && (
             <View style={styles.field}>
-              <ThemedText style={styles.fieldLabel}>🐾 Featuring</ThemedText>
+              <ThemedText style={styles.fieldLabel}>Featuring</ThemedText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.petRow}>
                 {user.pet_profiles.map((pet) => (
                   <TouchableOpacity

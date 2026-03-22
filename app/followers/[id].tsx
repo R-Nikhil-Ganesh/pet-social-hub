@@ -11,8 +11,12 @@ import {
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/services/api';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 interface FollowUser {
   id: number;
@@ -118,7 +122,7 @@ export default function FollowersScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#7C3AED" size="large" />
+        <ActivityIndicator color={colors.brand.primary} size="large" />
       </View>
     );
   }
@@ -129,18 +133,20 @@ export default function FollowersScreen() {
         data={users}
         keyExtractor={(item) => `follower-${item.id}`}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadFollowers(1, true)} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => loadFollowers(1, true)} tintColor={colors.brand.primary} />
         }
         renderItem={({ item }) => {
           const isPending = pendingIds.includes(item.id);
           const isSelfRow = item.id === selfId;
 
           return (
-            <View style={styles.row}>
+            <Card style={styles.row}>
               <TouchableOpacity
                 style={styles.rowMain}
                 onPress={() => router.push({ pathname: '/user/[id]', params: { id: String(item.id) } } as never)}
                 activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${item.display_name} profile`}
               >
                 <Avatar uri={item.avatar_url} size={46} isProfessional={item.is_professional} />
                 <View style={styles.meta}>
@@ -153,22 +159,16 @@ export default function FollowersScreen() {
               </TouchableOpacity>
 
               {!isSelfRow && (
-                <TouchableOpacity
+                <Button
                   style={[styles.followBtn, item.is_following && styles.followingBtn]}
+                  label={item.is_following ? 'Following' : 'Follow'}
+                  variant={item.is_following ? 'secondary' : 'primary'}
                   onPress={() => toggleFollow(item.id, item.is_following)}
+                  loading={isPending}
                   disabled={isPending}
-                  activeOpacity={0.85}
-                >
-                  {isPending ? (
-                    <ActivityIndicator color={item.is_following ? '#7C3AED' : '#fff'} size="small" />
-                  ) : (
-                    <ThemedText style={[styles.followBtnText, item.is_following && styles.followingBtnText]}>
-                      {item.is_following ? 'Following' : 'Follow'}
-                    </ThemedText>
-                  )}
-                </TouchableOpacity>
+                />
               )}
-            </View>
+            </Card>
           );
         }}
         onEndReachedThreshold={0.3}
@@ -179,11 +179,10 @@ export default function FollowersScreen() {
         }}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <ThemedText style={styles.emptyTitle}>No followers yet</ThemedText>
-            <ThemedText style={styles.emptySub}>This profile has no followers right now.</ThemedText>
+            <EmptyState emoji="👥" title="No followers yet" subtitle="This profile has no followers right now." />
           </View>
         }
-        ListFooterComponent={loadingMore ? <ActivityIndicator color="#7C3AED" style={styles.footerLoader} /> : null}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.brand.primary} style={styles.footerLoader} /> : null}
         contentContainerStyle={users.length === 0 ? styles.emptyContainer : undefined}
       />
     </SafeAreaView>
@@ -191,32 +190,32 @@ export default function FollowersScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9F9FB' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9F9FB' },
+  safeArea: { flex: 1, backgroundColor: colors.bg.app },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg.app },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ECECF0',
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    borderRadius: radius.md,
   },
   rowMain: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm,
   },
   meta: { flex: 1, gap: 2 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  displayName: { fontSize: 15, fontWeight: '700', color: '#18181B' },
-  username: { fontSize: 12, color: '#71717A' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  displayName: { fontSize: typography.size.sm, fontWeight: typography.weight.bold, color: colors.text.primary },
+  username: { fontSize: typography.size.xs, color: colors.text.secondary },
   proBadge: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: typography.weight.bold,
     color: '#0E7490',
     backgroundColor: '#CFFAFE',
     paddingHorizontal: 6,
@@ -226,29 +225,12 @@ const styles = StyleSheet.create({
   },
   followBtn: {
     minWidth: 90,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    minHeight: 44,
   },
   followingBtn: {
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#7C3AED',
-  },
-  followBtnText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: '700',
-  },
-  followingBtnText: {
-    color: '#7C3AED',
+    borderColor: colors.brand.primary,
   },
   footerLoader: { marginVertical: 12 },
   emptyContainer: { flexGrow: 1 },
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, gap: 6 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#18181B' },
-  emptySub: { fontSize: 13, color: '#71717A', textAlign: 'center' },
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
 });

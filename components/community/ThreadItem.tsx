@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Thread, useCommunityStore } from '@/store/communityStore';
@@ -22,6 +23,25 @@ export function ThreadItem({ thread }: ThreadItemProps) {
   const router = useRouter();
   const upvoteThread = useCommunityStore((s) => s.upvoteThread);
   const flair = thread.flair ? FLAIRS[thread.flair] : null;
+  const cardScale = useRef(new Animated.Value(1)).current;
+
+  const onCardPressIn = () => {
+    Animated.spring(cardScale, {
+      toValue: 0.985,
+      useNativeDriver: true,
+      speed: 36,
+      bounciness: 0,
+    }).start();
+  };
+
+  const onCardPressOut = () => {
+    Animated.spring(cardScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 0,
+    }).start();
+  };
 
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
@@ -33,16 +53,21 @@ export function ThreadItem({ thread }: ThreadItemProps) {
   };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={() => router.push(`/thread/${thread.id}`)}
-      activeOpacity={0.85}
-    >
+    <Animated.View style={[styles.container, { transform: [{ scale: cardScale }] }]}>
+      <TouchableOpacity
+        style={styles.pressArea}
+        onPress={() => router.push(`/thread/${thread.id}`)}
+        activeOpacity={0.85}
+        onPressIn={onCardPressIn}
+        onPressOut={onCardPressOut}
+      >
       {/* Vote column */}
       <View style={styles.voteCol}>
         <TouchableOpacity
           onPress={() => upvoteThread(thread.id)}
           style={[styles.upvoteBtn, thread.user_upvoted && styles.upvotedBtn]}
+          onPressIn={onCardPressIn}
+          onPressOut={onCardPressOut}
         >
           <ThemedText style={[styles.arrow, thread.user_upvoted && styles.arrowActive]}>
             ▲
@@ -65,9 +90,10 @@ export function ThreadItem({ thread }: ThreadItemProps) {
           )}
           {thread.is_professional && (
             <View style={styles.expertBadge}>
-              <ThemedText style={styles.expertText}>
-                ✓ {thread.professional_type ?? 'Expert'}
-              </ThemedText>
+              <View style={styles.expertRow}>
+                <Ionicons name="checkmark" size={10} color="#0891B2" />
+                <ThemedText style={styles.expertText}>{thread.professional_type ?? 'Expert'}</ThemedText>
+              </View>
             </View>
           )}
         </View>
@@ -91,19 +117,27 @@ export function ThreadItem({ thread }: ThreadItemProps) {
           <ThemedText style={styles.sep}>·</ThemedText>
           <ThemedText style={styles.time}>{timeAgo(thread.created_at)}</ThemedText>
           <ThemedText style={styles.sep}>·</ThemedText>
-          <ThemedText style={styles.replies}>💬 {thread.reply_count}</ThemedText>
+          <View style={styles.repliesWrap}>
+            <Ionicons name="chatbubble-outline" size={12} color="#71717A" />
+            <ThemedText style={styles.replies}>{thread.reply_count}</ThemedText>
+          </View>
         </View>
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: 8,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  pressArea: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 14,
-    marginBottom: 8,
     padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -174,6 +208,7 @@ const styles = StyleSheet.create({
     color: '#0891B2',
     textTransform: 'capitalize',
   },
+  expertRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   title: {
     fontSize: 15,
     fontWeight: '700',
@@ -211,5 +246,10 @@ const styles = StyleSheet.create({
   replies: {
     fontSize: 12,
     color: '#71717A',
+  },
+  repliesWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
 });

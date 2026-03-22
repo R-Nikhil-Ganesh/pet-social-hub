@@ -7,13 +7,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { GameCard } from '@/components/games/GameCard';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { Avatar } from '@/components/ui/Avatar';
 import { useGameStore, GameMode } from '@/store/gameStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const GAMES: GameMode[] = ['trivia', 'photo_contest', 'training', 'breed_guess'];
 
@@ -49,60 +54,82 @@ export default function GamesScreen() {
   const streakCount = challenges.filter((c) => c.completed_today).length;
   const totalChallenges = challenges.length;
 
+  const renderRank = (index: number, rank: number) => {
+    if (index < 3) {
+      const color = index === 0 ? '#EAB308' : index === 1 ? '#94A3B8' : '#D97706';
+      return <Ionicons name="trophy" size={18} color={color} />;
+    }
+    return <ThemedText style={styles.rankNumber}>{rank}</ThemedText>;
+  };
+
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <ThemedText style={styles.greeting}>🎮 Game Zone</ThemedText>
-            <ThemedText style={styles.subGreeting}>Earn points, climb the leaderboard</ThemedText>
+            <View style={styles.headerTitleRow}>
+              <Ionicons name="game-controller-outline" size={20} color={colors.text.primary} />
+              <ThemedText variant="title" style={styles.greeting}>Game Zone</ThemedText>
+            </View>
+            <ThemedText variant="body" style={styles.subGreeting}>Earn points, climb the leaderboard</ThemedText>
           </View>
           <PointsBadge points={totalPoints} size="md" showLabel />
         </View>
 
         {/* Streak Widget */}
         {totalChallenges > 0 && (
-          <TouchableOpacity
-            style={styles.streakCard}
-            onPress={() => router.push('/training')}
-            activeOpacity={0.85}
-          >
-            <View>
-              <ThemedText style={styles.streakTitle}>🔥 Daily Streak</ThemedText>
-              <ThemedText style={styles.streakSub}>
-                {streakCount}/{totalChallenges} challenges done today
-              </ThemedText>
-            </View>
-            <View style={styles.streakBars}>
-              {challenges.map((c) => (
-                <View
-                  key={c.id}
-                  style={[styles.streakBar, c.completed_today && styles.streakBarDone]}
-                />
-              ))}
-            </View>
+          <TouchableOpacity onPress={() => router.push('/training')} activeOpacity={0.9}>
+            <Card style={styles.streakCard}>
+              <View>
+                <View style={styles.streakTitleRow}>
+                  <Ionicons name="flame-outline" size={16} color={colors.text.inverse} />
+                  <ThemedText variant="title" style={styles.streakTitle}>Daily Streak</ThemedText>
+                </View>
+                <ThemedText variant="body" style={styles.streakSub}>
+                  {streakCount}/{totalChallenges} challenges done today
+                </ThemedText>
+              </View>
+              <View style={styles.streakBars}>
+                {challenges.map((c) => (
+                  <View
+                    key={c.id}
+                    style={[styles.streakBar, c.completed_today && styles.streakBarDone]}
+                  />
+                ))}
+              </View>
+            </Card>
           </TouchableOpacity>
         )}
 
         {/* Game Cards */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Choose a Game</ThemedText>
-          {GAMES.map((mode) => (
-            <GameCard key={mode} mode={mode} onPress={() => handleGamePress(mode)} />
-          ))}
+          <ThemedText variant="title" style={styles.sectionTitle}>Choose a Game</ThemedText>
+          {GAMES.length === 0 ? (
+            <EmptyState iconName="game-controller-outline" iconColor={colors.text.secondary} title="No games available" subtitle="Please check back shortly." />
+          ) : (
+            GAMES.map((mode) => (
+              <GameCard key={mode} mode={mode} onPress={() => handleGamePress(mode)} />
+            ))
+          )}
         </View>
 
         {/* Leaderboard */}
         {leaderboard.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionRow}>
-              <ThemedText style={styles.sectionTitle}>🏆 Leaderboard</ThemedText>
-              <TouchableOpacity onPress={() => router.push('/leaderboard')}>
-                <ThemedText style={styles.seeAll}>See all</ThemedText>
-              </TouchableOpacity>
+              <View style={styles.leaderboardTitleRow}>
+                <Ionicons name="trophy-outline" size={18} color={colors.text.primary} />
+                <ThemedText variant="title" style={styles.sectionTitle}>Leaderboard</ThemedText>
+              </View>
+              <Button
+                variant="ghost"
+                style={styles.seeAllBtn}
+                label="See all"
+                onPress={() => router.push('/leaderboard')}
+              />
             </View>
-            <View style={styles.leaderboard}>
+            <Card style={styles.leaderboard}>
               {leaderboard.slice(0, 5).map((entry, index) => (
                 <TouchableOpacity
                   key={entry.user_id}
@@ -112,18 +139,16 @@ export default function GamesScreen() {
                   ]}
                   onPress={() => router.push(`/user/${entry.user_id}`)}
                 >
-                  <ThemedText style={styles.rank}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${entry.rank}`}
-                  </ThemedText>
+                  <View style={styles.rank}>{renderRank(index, entry.rank)}</View>
                   <Avatar uri={entry.avatar_url} size={36} />
                   <View style={styles.entryInfo}>
-                    <ThemedText style={styles.entryName}>{entry.display_name}</ThemedText>
-                    <ThemedText style={styles.entryUsername}>@{entry.username}</ThemedText>
+                    <ThemedText variant="label" style={styles.entryName}>{entry.display_name}</ThemedText>
+                    <ThemedText variant="caption" style={styles.entryUsername}>@{entry.username}</ThemedText>
                   </View>
                   <PointsBadge points={entry.points} size="sm" />
                 </TouchableOpacity>
               ))}
-            </View>
+            </Card>
           </View>
         )}
 
@@ -134,34 +159,39 @@ export default function GamesScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9F9FB' },
+  safeArea: { flex: 1, backgroundColor: colors.bg.app },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.bg.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
+    borderBottomColor: colors.border.soft,
   },
-  greeting: { fontSize: 22, fontWeight: '800', color: '#18181B' },
-  subGreeting: { fontSize: 13, color: '#71717A', marginTop: 2 },
+  greeting: { color: colors.text.primary },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  subGreeting: { color: colors.text.secondary, marginTop: 2 },
   streakCard: {
-    margin: 16,
-    backgroundColor: '#7C3AED',
-    borderRadius: 18,
-    padding: 18,
-    gap: 12,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    margin: spacing.md,
+    backgroundColor: colors.brand.primary,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
-  streakTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  streakSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
-  streakBars: { flexDirection: 'row', gap: 6 },
+  streakTitle: { color: colors.text.inverse },
+  streakTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  streakSub: { color: 'rgba(255,255,255,0.9)' },
+  streakBars: { flexDirection: 'row', gap: spacing.xs },
   streakBar: {
     flex: 1,
     height: 8,
@@ -172,55 +202,59 @@ const styles = StyleSheet.create({
     backgroundColor: '#FCD34D',
   },
   section: {
-    paddingHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 4,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xxs,
   },
   sectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.xs,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#18181B',
+    color: colors.text.primary,
     marginBottom: 12,
   },
-  seeAll: {
-    fontSize: 13,
-    color: '#7C3AED',
-    fontWeight: '600',
+  leaderboardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  seeAllBtn: {
+    minHeight: 44,
+    minWidth: 90,
+    paddingHorizontal: spacing.xs,
   },
   leaderboard: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
   },
   leaderEntry: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    gap: 12,
+    padding: spacing.sm,
+    gap: spacing.sm,
+    minHeight: 60,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F4F4F5',
+    borderBottomColor: colors.border.soft,
   },
   myEntry: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: colors.bg.subtle,
   },
   rank: {
-    fontSize: 20,
     width: 32,
     textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankNumber: {
+    fontSize: 16,
+    color: colors.text.secondary,
+    fontWeight: typography.weight.bold,
   },
   entryInfo: { flex: 1 },
-  entryName: { fontSize: 14, fontWeight: '700', color: '#18181B' },
-  entryUsername: { fontSize: 12, color: '#71717A' },
-  bottomPad: { height: 20 },
+  entryName: { color: colors.text.primary, fontSize: typography.size.sm },
+  entryUsername: { color: colors.text.secondary },
+  bottomPad: { height: spacing.lg },
 });

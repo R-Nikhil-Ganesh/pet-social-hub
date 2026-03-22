@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { GameMode } from '@/store/gameStore';
+import { radius, spacing, typography } from '@/theme/tokens';
 
 interface GameCardProps {
   mode: GameMode;
@@ -12,66 +14,90 @@ interface GameCardProps {
 
 const GAME_META: Record<
   GameMode,
-  { title: string; description: string; emoji: string; gradient: [string, string] }
+  { title: string; description: string; icon: keyof typeof Ionicons.glyphMap; gradient: [string, string] }
 > = {
   trivia: {
     title: 'Trivia Battle',
     description: '1v1 pet quiz showdown',
-    emoji: '🧠',
+    icon: 'help-circle-outline',
     gradient: ['#7C3AED', '#5B21B6'],
   },
   photo_contest: {
     title: 'Photo Contest',
     description: 'Vote for the cutest pet',
-    emoji: '📸',
+    icon: 'camera-outline',
     gradient: ['#EC4899', '#9D174D'],
   },
   training: {
     title: 'Training Challenges',
     description: 'Daily streaks & rewards',
-    emoji: '🏆',
+    icon: 'trophy-outline',
     gradient: ['#F59E0B', '#B45309'],
   },
   breed_guess: {
     title: 'Breed Guesser',
     description: 'Guess the breed, win points',
-    emoji: '🔍',
+    icon: 'search-outline',
     gradient: ['#10B981', '#065F46'],
   },
 };
 
 export function GameCard({ mode, onPress, disabled }: GameCardProps) {
   const meta = GAME_META[mode];
+  const cardScale = useRef(new Animated.Value(1)).current;
+
+  const onCardPressIn = () => {
+    Animated.spring(cardScale, {
+      toValue: 0.985,
+      useNativeDriver: true,
+      speed: 36,
+      bounciness: 0,
+    }).start();
+  };
+
+  const onCardPressOut = () => {
+    Animated.spring(cardScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 0,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      style={[styles.card, disabled && styles.disabled]}
-      onPress={onPress}
-      activeOpacity={0.88}
-      disabled={disabled}
-    >
-      <LinearGradient
-        colors={meta.gradient}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+    <Animated.View style={[styles.card, disabled && styles.disabled, { transform: [{ scale: cardScale }] }]}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.88}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={meta.title}
+        onPressIn={onCardPressIn}
+        onPressOut={onCardPressOut}
       >
-        <ThemedText style={styles.emoji}>{meta.emoji}</ThemedText>
-        <View style={styles.textGroup}>
-          <ThemedText style={styles.title}>{meta.title}</ThemedText>
-          <ThemedText style={styles.description}>{meta.description}</ThemedText>
-        </View>
-        <ThemedText style={styles.arrow}>›</ThemedText>
-      </LinearGradient>
-    </TouchableOpacity>
+        <LinearGradient
+          colors={meta.gradient}
+          style={styles.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name={meta.icon} size={34} color="#fff" style={styles.icon} />
+          <View style={styles.textGroup}>
+            <ThemedText style={styles.title}>{meta.title}</ThemedText>
+            <ThemedText style={styles.description}>{meta.description}</ThemedText>
+          </View>
+          <ThemedText style={styles.arrow}>›</ThemedText>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -81,24 +107,27 @@ const styles = StyleSheet.create({
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    gap: 14,
+    minHeight: 112,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  emoji: {
-    fontSize: 36,
+  icon: {
+    width: 38,
+    textAlign: 'center',
   },
   textGroup: {
     flex: 1,
     gap: 3,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.extrabold,
     color: '#fff',
   },
   description: {
-    fontSize: 13,
+    fontSize: typography.size.sm,
     color: 'rgba(255,255,255,0.8)',
+    lineHeight: 20,
   },
   arrow: {
     fontSize: 28,

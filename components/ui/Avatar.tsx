@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Image, StyleSheet, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 
 interface AvatarProps {
@@ -10,7 +11,7 @@ interface AvatarProps {
   style?: ViewStyle;
 }
 
-export function Avatar({ uri, size = 40, fallback = '🐾', isProfessional, style }: AvatarProps) {
+export function Avatar({ uri, size = 40, fallback = '', isProfessional, style }: AvatarProps) {
   return (
     <View style={[styles.wrapper, { width: size, height: size, borderRadius: size / 2 }, style]}>
       {uri ? (
@@ -25,12 +26,16 @@ export function Avatar({ uri, size = 40, fallback = '🐾', isProfessional, styl
             { width: size, height: size, borderRadius: size / 2 },
           ]}
         >
-          <ThemedText style={{ fontSize: size * 0.45 }}>{fallback}</ThemedText>
+          {fallback ? (
+            <ThemedText style={{ fontSize: size * 0.45 }}>{fallback}</ThemedText>
+          ) : (
+            <Ionicons name="paw-outline" size={size * 0.45} color="#7C3AED" />
+          )}
         </View>
       )}
       {isProfessional && (
         <View style={[styles.badge, { right: -2, bottom: -2 }]}>
-          <ThemedText style={styles.badgeText}>✓</ThemedText>
+          <Ionicons name="checkmark" size={9} color="#fff" />
         </View>
       )}
     </View>

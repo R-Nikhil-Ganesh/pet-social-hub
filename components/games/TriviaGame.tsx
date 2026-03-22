@@ -6,6 +6,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PointsBadge } from '@/components/ui/PointsBadge';
@@ -77,7 +78,7 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
     const won = session.winner_id === user?.id;
     return (
       <View style={styles.finishedContainer}>
-        <ThemedText style={styles.resultEmoji}>{won ? '🏆' : '😔'}</ThemedText>
+        <Ionicons name={won ? 'trophy' : 'close-circle-outline'} size={48} color={won ? '#EAB308' : '#A1A1AA'} />
         <ThemedText style={styles.resultTitle}>{won ? 'You Won!' : 'Better Luck Next Time'}</ThemedText>
         <View style={styles.scoreRow}>
           <View style={styles.scoreBlock}>

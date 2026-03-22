@@ -2,7 +2,10 @@ import React from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function PetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -11,28 +14,27 @@ export default function PetDetailScreen() {
   if (!pet) {
     return (
       <View style={styles.center}>
-        <ThemedText style={styles.empty}>Pet not found.</ThemedText>
+        <EmptyState iconName="paw-outline" iconColor={colors.text.secondary} title="Pet not found" subtitle="This pet profile may have been removed." />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
-        <ThemedText style={styles.name}>{pet.name}</ThemedText>
-        <ThemedText style={styles.meta}>{pet.breed}</ThemedText>
-        <ThemedText style={styles.meta}>{pet.age} years old</ThemedText>
-        <ThemedText style={styles.meta}>{pet.species}</ThemedText>
-      </View>
+      <Card style={styles.card}>
+        <ThemedText variant="display" style={styles.name}>{pet.name}</ThemedText>
+        <ThemedText variant="body" style={styles.meta}>{pet.breed}</ThemedText>
+        <ThemedText variant="body" style={styles.meta}>{pet.age} years old</ThemedText>
+        <ThemedText variant="body" style={styles.meta}>{pet.species}</ThemedText>
+      </Card>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9FB', padding: 16 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9F9FB' },
-  empty: { color: '#71717A' },
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 20, gap: 8 },
-  name: { fontSize: 24, fontWeight: '800', color: '#18181B' },
-  meta: { fontSize: 15, color: '#52525B' },
+  container: { flex: 1, backgroundColor: colors.bg.app, padding: spacing.md },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg.app, paddingHorizontal: spacing.md },
+  card: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.xs },
+  name: { fontSize: 24, color: colors.text.primary },
+  meta: { fontSize: typography.size.md, color: colors.text.secondary },
 });

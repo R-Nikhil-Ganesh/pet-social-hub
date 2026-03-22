@@ -1,16 +1,32 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PetTag } from '@/components/ui/PetTag';
-import { HotTake, useFeedStore } from '@/store/feedStore';
+
+interface HotTake {
+  id: number;
+  avatar_url?: string;
+  display_name: string;
+  username: string;
+  flair: string;
+  content: string;
+  upvotes: number;
+  user_upvoted: boolean;
+  comment_count: number;
+  pet?: {
+    breed: string;
+    age: number;
+  };
+}
 
 const FLAIRS: Record<string, { label: string; color: string; bg: string }> = {
-  hot_take: { label: '🌶️ Hot Take', color: '#DC2626', bg: '#FEF2F2' },
-  unpopular: { label: '🙈 Unpopular Opinion', color: '#D97706', bg: '#FFFBEB' },
-  meme: { label: '😂 Meme', color: '#7C3AED', bg: '#F5F3FF' },
-  debate: { label: '⚡ Debate', color: '#2563EB', bg: '#EFF6FF' },
-  confession: { label: '🤫 Confession', color: '#DB2777', bg: '#FDF2F8' },
+  hot_take: { label: 'Hot Take', color: '#DC2626', bg: '#FEF2F2' },
+  unpopular: { label: 'Unpopular Opinion', color: '#D97706', bg: '#FFFBEB' },
+  meme: { label: 'Meme', color: '#7C3AED', bg: '#F5F3FF' },
+  debate: { label: 'Debate', color: '#2563EB', bg: '#EFF6FF' },
+  confession: { label: 'Confession', color: '#DB2777', bg: '#FDF2F8' },
 };
 
 interface HotTakeCardProps {
@@ -18,7 +34,6 @@ interface HotTakeCardProps {
 }
 
 function HotTakeCard({ hotTake }: HotTakeCardProps) {
-  const upvoteHotTake = useFeedStore((s) => s.upvoteHotTake);
   const flair = FLAIRS[hotTake.flair] ?? FLAIRS.hot_take;
 
   return (
@@ -45,7 +60,7 @@ function HotTakeCard({ hotTake }: HotTakeCardProps) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.upvoteBtn, hotTake.user_upvoted && styles.upvotedBtn]}
-          onPress={() => upvoteHotTake(hotTake.id)}
+          onPress={() => {}}
         >
           <ThemedText style={styles.upvoteArrow}>▲</ThemedText>
           <ThemedText
@@ -54,7 +69,10 @@ function HotTakeCard({ hotTake }: HotTakeCardProps) {
             {hotTake.upvotes}
           </ThemedText>
         </TouchableOpacity>
-        <ThemedText style={styles.comments}>💬 {hotTake.comment_count}</ThemedText>
+        <View style={styles.commentsWrap}>
+          <Ionicons name="chatbubble-outline" size={12} color="#71717A" />
+          <ThemedText style={styles.comments}>{hotTake.comment_count}</ThemedText>
+        </View>
       </View>
     </View>
   );
@@ -68,7 +86,8 @@ export function HotTakesBoard({ hotTakes }: HotTakesBoardProps) {
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionTitle}>🔥 Hot Takes Board</ThemedText>
+        <Ionicons name="flame-outline" size={16} color="#18181B" />
+        <ThemedText style={styles.sectionTitle}>Hot Takes Board</ThemedText>
         <ThemedText style={styles.sectionSubtitle}>Trending in your community</ThemedText>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
@@ -180,5 +199,10 @@ const styles = StyleSheet.create({
   comments: {
     fontSize: 13,
     color: '#71717A',
+  },
+  commentsWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });

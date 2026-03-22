@@ -117,7 +117,7 @@ export default function CreateStoryScreen() {
       ) : (
         <TouchableOpacity style={styles.pickArea} onPress={pickMedia}>
           <LinearGradient colors={['#7C3AED', '#EC4899']} style={styles.pickAreaGradient}>
-            <ThemedText style={styles.pickIcon}>📷</ThemedText>
+            <ThemedText style={styles.pickIcon}>+</ThemedText>
             <ThemedText style={styles.pickTitle}>Add your story</ThemedText>
             <ThemedText style={styles.pickSub}>Disappears after 24 hours</ThemedText>
           </LinearGradient>

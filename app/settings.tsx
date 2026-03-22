@@ -10,7 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -40,29 +43,27 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView>
         {/* Notifications section */}
-        <ThemedText style={styles.sectionHeader}>Notifications</ThemedText>
-        <View style={styles.card}>
+        <ThemedText variant="caption" style={styles.sectionHeader}>Notifications</ThemedText>
+        <Card style={styles.card}>
           <SettingRow label="Likes & Reactions" value={notifLikes} onToggle={setNotifLikes} />
           <SettingRow label="Comments" value={notifComments} onToggle={setNotifComments} />
           <SettingRow label="New Followers" value={notifFollows} onToggle={setNotifFollows} />
-          <SettingRow label="Chat Messages" value={notifMessages} onToggle={setNotifMessages} last />
+          <SettingRow label="Chat Messages" value={notifMessages} onToggle={setNotifMessages} />
           <SettingRow label="Game Invites" value={notifGames} onToggle={setNotifGames} last />
-        </View>
+        </Card>
 
         {/* Account section */}
-        <ThemedText style={styles.sectionHeader}>Account</ThemedText>
-        <View style={styles.card}>
+        <ThemedText variant="caption" style={styles.sectionHeader}>Account</ThemedText>
+        <Card style={styles.card}>
           <LinkRow label="Edit Profile" onPress={() => router.push('/edit-profile')} />
           <LinkRow label="Privacy Policy" onPress={() => {}} />
           <LinkRow label="Terms of Service" onPress={() => {}} last />
-        </View>
+        </Card>
 
         {/* Danger zone */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <ThemedText style={styles.logoutText}>Log Out</ThemedText>
-        </TouchableOpacity>
+        <Button style={styles.logoutBtn} variant="secondary" label="Log Out" onPress={handleLogout} />
 
-        <ThemedText style={styles.version}>Pawprint v1.0.0</ThemedText>
+        <ThemedText variant="caption" style={styles.version}>Pawprint v1.0.0</ThemedText>
       </ScrollView>
     </SafeAreaView>
   );
@@ -85,8 +86,10 @@ function SettingRow({
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: '#D4D4D8', true: '#7C3AED' }}
+        trackColor={{ false: '#D4D4D8', true: colors.brand.primary }}
         thumbColor="#fff"
+        accessibilityLabel={`${label} notifications`}
+        accessibilityRole="switch"
       />
     </View>
   );
@@ -102,7 +105,12 @@ function LinkRow({
   last?: boolean;
 }) {
   return (
-    <TouchableOpacity style={[styles.row, !last && styles.rowBorder]} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.row, !last && styles.rowBorder]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
       <ThemedText style={styles.rowLabel}>{label}</ThemedText>
       <ThemedText style={styles.chevron}>›</ThemedText>
     </TouchableOpacity>
@@ -110,47 +118,46 @@ function LinkRow({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9FB' },
+  container: { flex: 1, backgroundColor: colors.bg.app },
   sectionHeader: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#71717A',
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
+    color: colors.text.secondary,
     marginTop: 24,
     marginBottom: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#fff',
-    marginHorizontal: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E4E4E7',
+    backgroundColor: colors.bg.surface,
+    marginHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.soft,
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    minHeight: 52,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F4F4F5',
+    borderBottomColor: colors.border.soft,
   },
-  rowLabel: { fontSize: 15, color: '#18181B' },
-  chevron: { fontSize: 22, color: '#A1A1AA' },
+  rowLabel: { fontSize: 15, color: colors.text.primary },
+  chevron: { fontSize: 22, color: colors.text.muted },
   logoutBtn: {
-    marginTop: 32,
-    marginHorizontal: 16,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
+    marginTop: spacing.xxl,
+    marginHorizontal: spacing.md,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
   },
-  logoutText: { fontSize: 16, color: '#EF4444', fontWeight: '700' },
-  version: { fontSize: 12, color: '#A1A1AA', textAlign: 'center', marginTop: 24, marginBottom: 40 },
+  version: { fontSize: typography.size.xs, color: colors.text.muted, textAlign: 'center', marginTop: spacing.xl, marginBottom: 40 },
 });

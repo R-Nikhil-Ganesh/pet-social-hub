@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { useGameStore } from '@/store/gameStore';
@@ -18,11 +19,11 @@ export default function LeaderboardScreen() {
     fetchLeaderboard().finally(() => setLoading(false));
   }, [fetchLeaderboard]);
 
-  const medal = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
-    return `#${rank}`;
+  const medalColor = (rank: number) => {
+    if (rank === 1) return '#EAB308';
+    if (rank === 2) return '#94A3B8';
+    if (rank === 3) return '#D97706';
+    return '#71717A';
   };
 
   if (loading) {
@@ -36,7 +37,10 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>🏆 All-Time Leaderboard</ThemedText>
+        <View style={styles.titleRow}>
+          <Ionicons name="trophy-outline" size={18} color="#fff" />
+          <ThemedText style={styles.title}>All-Time Leaderboard</ThemedText>
+        </View>
       </View>
       <FlatList
         data={leaderboard}
@@ -46,8 +50,9 @@ export default function LeaderboardScreen() {
         renderItem={({ item, index }) => (
           <View style={[styles.row, index < 3 && styles.topRow]}>
             <ThemedText style={[styles.rank, index < 3 && styles.medalRank]}>
-              {medal(index + 1)}
+              {index < 3 ? '' : `#${index + 1}`}
             </ThemedText>
+            {index < 3 ? <Ionicons name="trophy" size={16} color={medalColor(index + 1)} style={styles.topIcon} /> : null}
             <Avatar uri={item.avatar_url} size={40} isProfessional={false} />
             <View style={styles.info}>
               <ThemedText style={styles.name}>{item.display_name}</ThemedText>
@@ -73,6 +78,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: { fontSize: 18, fontWeight: '800', color: '#fff' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   list: { padding: 14, gap: 10 },
   empty: { textAlign: 'center', color: '#71717A', marginTop: 40 },
   row: {
@@ -93,6 +99,7 @@ const styles = StyleSheet.create({
   },
   rank: { fontSize: 16, fontWeight: '800', color: '#71717A', width: 36, textAlign: 'center' },
   medalRank: { fontSize: 22 },
+  topIcon: { marginLeft: -20, marginRight: 4 },
   info: { flex: 1 },
   name: { fontSize: 14, fontWeight: '700', color: '#18181B' },
   username: { fontSize: 12, color: '#71717A' },

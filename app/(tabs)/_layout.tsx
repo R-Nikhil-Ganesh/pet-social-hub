@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 export default function TabsLayout() {
   return (
@@ -13,6 +14,28 @@ export default function TabsLayout() {
         tabBarLabelStyle: styles.label,
         tabBarItemStyle: styles.tabItem,
         tabBarStyle: styles.tabBar,
+        tabBarButton: (props) => (
+          <TouchableOpacity
+            accessibilityState={props.accessibilityState}
+            accessibilityLabel={props.accessibilityLabel}
+            accessibilityHint={props.accessibilityHint}
+            testID={props.testID}
+            style={props.style}
+            onLayout={props.onLayout}
+            onLongPress={props.onLongPress ?? undefined}
+            onPressIn={props.onPressIn ?? undefined}
+            onPressOut={props.onPressOut ?? undefined}
+            onPress={(event) => {
+              const isSelected = Boolean(props.accessibilityState?.selected);
+              if (!isSelected && Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              }
+              props.onPress?.(event);
+            }}
+          >
+            {props.children}
+          </TouchableOpacity>
+        ),
       }}
     >
       <Tabs.Screen

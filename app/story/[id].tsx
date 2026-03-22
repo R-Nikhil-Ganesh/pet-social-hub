@@ -13,7 +13,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import api from '@/services/api';
+import { radius, spacing, typography } from '@/theme/tokens';
 
 interface Story {
   id: number;
@@ -194,21 +196,29 @@ export default function StoryViewerScreen() {
           <ThemedText style={styles.username}>@{story.username}</ThemedText>
         </View>
         <View style={{ flex: 1 }} />
-        <TouchableOpacity onPress={closeStory} hitSlop={16}>
-          <ThemedText style={styles.closeBtn}>✕</ThemedText>
-        </TouchableOpacity>
+        <Button variant="ghost" style={styles.closeBtnWrap} onPress={closeStory} label="✕" accessibilityLabel="Close story" />
       </View>
 
       {/* Pet name if present */}
       {story.pet_name && (
         <View style={styles.petPill}>
-          <ThemedText style={styles.petPillText}>🐾 {story.pet_name}</ThemedText>
+          <ThemedText style={styles.petPillText}>{story.pet_name}</ThemedText>
         </View>
       )}
 
       {/* Tap zones: left to previous, right to next */}
-      <TouchableOpacity style={styles.tapLeft} onPress={goPrev} />
-      <TouchableOpacity style={styles.tapRight} onPress={goNext} />
+      <TouchableOpacity
+        style={styles.tapLeft}
+        onPress={goPrev}
+        accessibilityRole="button"
+        accessibilityLabel="Previous story"
+      />
+      <TouchableOpacity
+        style={styles.tapRight}
+        onPress={goNext}
+        accessibilityRole="button"
+        accessibilityLabel="Next story"
+      />
     </SafeAreaView>
   );
 }
@@ -236,8 +246,8 @@ const styles = StyleSheet.create({
   progressRow: {
     position: 'absolute',
     top: 44,
-    left: 12,
-    right: 12,
+    left: spacing.sm,
+    right: spacing.sm,
     flexDirection: 'row',
     gap: 4,
   },
@@ -256,25 +266,31 @@ const styles = StyleSheet.create({
   authorRow: {
     position: 'absolute',
     top: 54,
-    left: 14,
-    right: 14,
+    left: spacing.sm,
+    right: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.xs,
   },
-  displayName: { fontSize: 14, color: '#fff', fontWeight: '700' },
+  displayName: { fontSize: typography.size.sm, color: '#fff', fontWeight: typography.weight.bold },
   username: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
-  closeBtn: { fontSize: 22, color: '#fff', fontWeight: '700' },
+  closeBtnWrap: {
+    minWidth: 44,
+    minHeight: 44,
+    borderRadius: radius.pill,
+    paddingHorizontal: 0,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
   petPill: {
     position: 'absolute',
     top: 108,
-    left: 14,
+    left: spacing.sm,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 30,
-    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 5,
   },
-  petPillText: { fontSize: 13, color: '#fff', fontWeight: '600' },
+  petPillText: { fontSize: 13, color: '#fff', fontWeight: typography.weight.semibold },
   tapLeft: { position: 'absolute', top: 0, left: 0, bottom: 0, width: '35%' },
   tapRight: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '35%' },
 });

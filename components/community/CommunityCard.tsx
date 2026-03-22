@@ -2,7 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Community } from '@/store/communityStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 interface CommunityCardProps {
   community: Community;
@@ -26,58 +29,63 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
 
   return (
     <TouchableOpacity
-      style={styles.card}
       onPress={() => {
         if (Number.isFinite(communityId) && communityId > 0) {
           router.push(`/community/${communityId}`);
         }
       }}
       activeOpacity={0.85}
+      accessibilityRole="button"
     >
-      <View style={styles.iconWrapper}>
-        {canShowImage ? (
-          <Image
-            source={{ uri: community.icon_url }}
-            style={styles.iconImage}
-            resizeMode="cover"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <ThemedText style={styles.iconFallback}>{fallbackLabel}</ThemedText>
-        )}
-      </View>
-
-      <View style={styles.info}>
-        <View style={styles.nameRow}>
-          <ThemedText style={styles.name}>{name}</ThemedText>
-          {community.is_default && (
-            <View style={styles.defaultBadge}>
-              <ThemedText style={styles.defaultText}>Auto</ThemedText>
-            </View>
+      <Card style={styles.card}>
+        <View style={styles.iconWrapper}>
+          {canShowImage ? (
+            <Image
+              source={{ uri: community.icon_url }}
+              style={styles.iconImage}
+              resizeMode="cover"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <ThemedText style={styles.iconFallback}>{fallbackLabel}</ThemedText>
           )}
         </View>
-        <ThemedText style={styles.description} numberOfLines={2}>
-          {description}
-        </ThemedText>
-        <View style={styles.stats}>
-          <ThemedText style={styles.stat}>Members: {memberCount.toLocaleString()}</ThemedText>
-          {unreadCount > 0 ? (
-            <View style={styles.unreadBadge}>
-              <ThemedText style={styles.unreadText}>{unreadCount}</ThemedText>
-            </View>
-          ) : null}
-        </View>
-      </View>
 
-      {!community.is_member ? (
-        <TouchableOpacity style={styles.joinBtn} onPress={onJoin}>
-          <ThemedText style={styles.joinText}>Join</ThemedText>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.joinedBadge}>
-          <ThemedText style={styles.joinedText}>Joined</ThemedText>
+        <View style={styles.info}>
+          <View style={styles.nameRow}>
+            <ThemedText variant="label" style={styles.name}>{name}</ThemedText>
+            {community.is_default && (
+              <View style={styles.defaultBadge}>
+                <ThemedText style={styles.defaultText}>Auto</ThemedText>
+              </View>
+            )}
+          </View>
+          <ThemedText style={styles.description} numberOfLines={2}>
+            {description}
+          </ThemedText>
+          <View style={styles.stats}>
+            <ThemedText style={styles.stat}>Members: {memberCount.toLocaleString()}</ThemedText>
+            {unreadCount > 0 ? (
+              <View style={styles.unreadBadge}>
+                <ThemedText style={styles.unreadText}>{unreadCount}</ThemedText>
+              </View>
+            ) : null}
+          </View>
         </View>
-      )}
+
+        {!community.is_member ? (
+          <Button
+            style={styles.joinBtn}
+            label="Join"
+            onPress={onJoin}
+            accessibilityLabel={`Join ${name}`}
+          />
+        ) : (
+          <View style={styles.joinedBadge}>
+            <ThemedText style={styles.joinedText}>Joined</ThemedText>
+          </View>
+        )}
+      </Card>
     </TouchableOpacity>
   );
 }
@@ -86,22 +94,16 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-    gap: 12,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+    borderRadius: radius.lg,
   },
   iconWrapper: {
     width: 52,
     height: 52,
-    borderRadius: 14,
-    backgroundColor: '#EDE9FE',
+    borderRadius: radius.md,
+    backgroundColor: colors.bg.subtle,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -111,9 +113,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   iconFallback: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#5B21B6',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.extrabold,
+    color: colors.brand.primaryDark,
   },
   info: {
     flex: 1,
@@ -122,42 +124,40 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   name: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#18181B',
+    color: colors.text.primary,
   },
   defaultBadge: {
     backgroundColor: '#FEF3C7',
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   defaultText: {
     fontSize: 10,
     color: '#D97706',
-    fontWeight: '600',
+    fontWeight: typography.weight.semibold,
   },
   description: {
-    fontSize: 12,
-    color: '#71717A',
-    lineHeight: 16,
+    fontSize: typography.size.xs,
+    color: colors.text.secondary,
+    lineHeight: 17,
   },
   stats: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     marginTop: 2,
   },
   stat: {
     fontSize: 11,
-    color: '#A1A1AA',
+    color: colors.text.muted,
   },
   unreadBadge: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 10,
+    backgroundColor: colors.brand.primary,
+    borderRadius: radius.pill,
     minWidth: 18,
     height: 18,
     alignItems: 'center',
@@ -166,34 +166,27 @@ const styles = StyleSheet.create({
   },
   unreadText: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: '700',
+    color: colors.text.inverse,
+    fontWeight: typography.weight.bold,
   },
   joinBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-  },
-  joinText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
+    minWidth: 74,
+    minHeight: 44,
   },
   joinedBadge: {
-    minWidth: 32,
-    height: 32,
-    borderRadius: 16,
+    minWidth: 74,
+    height: 44,
+    borderRadius: radius.pill,
     backgroundColor: '#F0FDF4',
     borderWidth: 1.5,
     borderColor: '#22C55E',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
   },
   joinedText: {
     color: '#16A34A',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
   },
 });

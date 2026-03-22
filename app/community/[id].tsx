@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
+  Animated,
   View,
   StyleSheet,
   TouchableOpacity,
@@ -16,13 +17,17 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { ThemedText } from '@/components/ThemedText';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ThreadItem } from '@/components/community/ThreadItem';
 import { ChatBubble } from '@/components/community/ChatBubble';
 import { useCommunityStore } from '@/store/communityStore';
 import { useAuthStore } from '@/store/authStore';
 import { getSocket } from '@/services/socket';
 import api from '@/services/api';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type CommunityTab = 'threads' | 'chat';
 
@@ -76,7 +81,10 @@ export default function CommunityDetailScreen() {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [detailsCommunity, setDetailsCommunity] = useState<typeof community | null>(null);
   const [isLeavingCommunity, setIsLeavingCommunity] = useState(false);
+  const [tabBarWidth, setTabBarWidth] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const tabContentOpacity = useRef(new Animated.Value(1)).current;
+  const tabIndicatorIndex = useRef(new Animated.Value(0)).current;
 
   const threadFlairs = ['discussion', 'question', 'advice', 'story', 'news', 'expert'];
 
@@ -84,7 +92,7 @@ export default function CommunityDetailScreen() {
     navigation.setOptions({
       headerTitleAlign: 'left',
       headerTitle: () => (
-        <TouchableOpacity onPress={() => openCommunityDetails()} hitSlop={8}>
+        <TouchableOpacity onPress={() => openCommunityDetails()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Open community details">
           <ThemedText style={styles.headerTitle}>{community?.name || communityTitle}</ThemedText>
         </TouchableOpacity>
       ),
@@ -150,6 +158,24 @@ export default function CommunityDetailScreen() {
       socket.off('chat:error');
     };
   }, [token, communityId, hasValidCommunityId, user?.id]);
+
+  useEffect(() => {
+    tabContentOpacity.setValue(0.9);
+    Animated.timing(tabContentOpacity, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [activeTab, tabContentOpacity]);
+
+  useEffect(() => {
+    Animated.spring(tabIndicatorIndex, {
+      toValue: activeTab === 'threads' ? 0 : 1,
+      useNativeDriver: true,
+      speed: 24,
+      bounciness: 0,
+    }).start();
+  }, [activeTab, tabIndicatorIndex]);
 
   const reactToMessage = async (messageId: string, emoji: string) => {
     if (!token) return;
@@ -386,140 +412,185 @@ export default function CommunityDetailScreen() {
     }
   };
 
+  const tabGap = spacing.xs;
+  const tabBarInset = spacing.xxs;
+  const indicatorWidth = tabBarWidth > 0 ? (tabBarWidth - tabBarInset * 2 - tabGap) / 2 : 0;
+  const indicatorTranslateX = tabIndicatorIndex.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, indicatorWidth + tabGap],
+  });
+
+  const handleTabPress = (nextTab: CommunityTab) => {
+    if (nextTab === activeTab) return;
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    setActiveTab(nextTab);
+  };
+
+  const handleOpenThreadComposer = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    setShowThreadComposer(true);
+  };
+
+  const handleSendMessagePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    void sendMessage();
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Tab Toggle */}
-      <View style={styles.tabRow}>
+      <View style={styles.tabRow} onLayout={(e) => setTabBarWidth(e.nativeEvent.layout.width)}>
+        {indicatorWidth > 0 && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.tabIndicator,
+              {
+                width: indicatorWidth,
+                transform: [{ translateX: indicatorTranslateX }],
+              },
+            ]}
+          />
+        )}
         {(['threads', 'chat'] as CommunityTab[]).map((tab) => (
           <TouchableOpacity
             key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
+            style={styles.tab}
+            onPress={() => handleTabPress(tab)}
+            accessibilityRole="button"
+            accessibilityLabel={tab === 'threads' ? 'Open threads tab' : 'Open live chat tab'}
+            accessibilityState={{ selected: activeTab === tab }}
           >
             <ThemedText style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab === 'threads' ? '📋 Threads' : '💬 Live Chat'}
+              {tab === 'threads' ? 'Threads' : 'Live Chat'}
             </ThemedText>
           </TouchableOpacity>
         ))}
       </View>
 
-      {activeTab === 'threads' ? (
-        isThreadsLoading ? (
-          <ActivityIndicator color="#7C3AED" style={styles.loader} />
-        ) : (
-          <FlatList
-            data={threads}
-            keyExtractor={(item) => `thread-${item.id}`}
-            renderItem={({ item }) => <ThreadItem thread={item} />}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={
-              <TouchableOpacity
-                style={styles.newThreadBtn}
-                onPress={() => setShowThreadComposer(true)}
-              >
-                <ThemedText style={styles.newThreadBtnText}>Start new thread</ThemedText>
-              </TouchableOpacity>
-            }
-            ListEmptyComponent={
-              <View style={styles.empty}>
-                <ThemedText style={styles.emptyEmoji}>📝</ThemedText>
-                <ThemedText style={styles.emptyTitle}>No threads yet</ThemedText>
-                <ThemedText style={styles.emptySubtext}>
-                  Start the conversation in this community!
-                </ThemedText>
-              </View>
-            }
-          />
-        )
-      ) : (
-        <KeyboardAvoidingView
-          style={styles.chatContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={140}
-        >
-          {isChatLoading ? (
-            <ActivityIndicator color="#7C3AED" style={styles.loader} />
+      <Animated.View style={styles.tabContentWrap}>
+        {activeTab === 'threads' ? (
+          isThreadsLoading ? (
+            <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
           ) : (
-            <FlatList
-              ref={flatListRef}
-              data={chatMessages}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <ChatBubble
-                  message={item}
-                  onReplyPress={() => startReplyToMessage(item)}
-                  onReactPress={(emoji) => reactToMessage(item._id, emoji)}
+            <Animated.View style={[styles.tabContentFill, { opacity: tabContentOpacity }]}>
+              <FlatList
+                data={threads}
+                keyExtractor={(item) => `thread-${item.id}`}
+                renderItem={({ item }) => <ThreadItem thread={item} />}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                ListHeaderComponent={
+                  <Button
+                    style={styles.newThreadBtn}
+                    variant="secondary"
+                    label="Start new thread"
+                    onPress={handleOpenThreadComposer}
+                  />
+                }
+                ListEmptyComponent={
+                  <View style={styles.emptyWrap}>
+                    <EmptyState
+                      iconName="document-text-outline"
+                      iconColor={colors.text.secondary}
+                      title="No threads yet"
+                      subtitle="Start the conversation in this community!"
+                    />
+                  </View>
+                }
+              />
+            </Animated.View>
+          )
+        ) : (
+          <Animated.View style={[styles.tabContentFill, { opacity: tabContentOpacity }]}>
+            <KeyboardAvoidingView
+              style={styles.chatContainer}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={140}
+            >
+              {isChatLoading ? (
+                <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
+              ) : (
+                <FlatList
+                  ref={flatListRef}
+                  data={chatMessages}
+                  keyExtractor={(item) => item._id}
+                  renderItem={({ item }) => (
+                    <ChatBubble
+                      message={item}
+                      onReplyPress={() => startReplyToMessage(item)}
+                      onReactPress={(emoji) => reactToMessage(item._id, emoji)}
+                    />
+                  )}
+                  contentContainerStyle={styles.chatContent}
+                  onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+                  showsVerticalScrollIndicator={false}
+                  ListEmptyComponent={
+                    <View style={styles.emptyWrap}>
+                      <EmptyState iconName="chatbubble-ellipses-outline" iconColor={colors.text.secondary} title="No messages yet" subtitle="Say hello to the community!" />
+                    </View>
+                  }
                 />
               )}
-              contentContainerStyle={styles.chatContent}
-              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <View style={styles.empty}>
-                  <ThemedText style={styles.emptyEmoji}>👋</ThemedText>
-                  <ThemedText style={styles.emptyTitle}>No messages yet</ThemedText>
-                  <ThemedText style={styles.emptySubtext}>Say hello to the community!</ThemedText>
+              {/* Chat Input */}
+              {replyingTo && (
+                <View style={styles.replyComposerPreview}>
+                  <View style={styles.replyPreviewBar} />
+                  <View style={styles.replyPreviewTextWrap}>
+                    <ThemedText style={styles.replyComposerTitle}>Replying to message</ThemedText>
+                    <ThemedText style={styles.replyComposerText} numberOfLines={1}>
+                      {replyingTo.preview}
+                    </ThemedText>
+                  </View>
+                  <TouchableOpacity onPress={() => setReplyingTo(null)} accessibilityRole="button" accessibilityLabel="Cancel reply">
+                    <ThemedText style={styles.replyComposerClose}>✕</ThemedText>
+                  </TouchableOpacity>
                 </View>
-              }
-            />
-          )}
-          {/* Chat Input */}
-          {replyingTo && (
-            <View style={styles.replyComposerPreview}>
-              <View style={styles.replyPreviewBar} />
-              <View style={styles.replyPreviewTextWrap}>
-                <ThemedText style={styles.replyComposerTitle}>Replying to message</ThemedText>
-                <ThemedText style={styles.replyComposerText} numberOfLines={1}>
-                  {replyingTo.preview}
-                </ThemedText>
-              </View>
-              <TouchableOpacity onPress={() => setReplyingTo(null)}>
-                <ThemedText style={styles.replyComposerClose}>✕</ThemedText>
-              </TouchableOpacity>
-            </View>
-          )}
-          {chatImageUri && (
-            <View style={styles.chatImagePreviewWrap}>
-              <Image source={{ uri: chatImageUri }} style={styles.chatImagePreview} />
-              <TouchableOpacity style={styles.removeChatImageBtn} onPress={() => setChatImageUri(null)}>
-                <ThemedText style={styles.removeChatImageText}>✕</ThemedText>
-              </TouchableOpacity>
-            </View>
-          )}
-          <View style={styles.inputRow}>
-            <TouchableOpacity style={styles.pickImageBtn} onPress={pickChatImage}>
-              <ThemedText style={styles.pickImageText}>📷</ThemedText>
-            </TouchableOpacity>
-            <TextInput
-              style={styles.chatInput}
-              value={chatInput}
-              onChangeText={setChatInput}
-              placeholder={`Message ${community?.name ?? 'community'}…`}
-              placeholderTextColor="#A1A1AA"
-              returnKeyType="send"
-              onSubmitEditing={sendMessage}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              style={[
-                styles.sendBtn,
-                (!chatInput.trim() && !chatImageUri) && styles.sendBtnDisabled,
-                isSendingImage && styles.sendBtnDisabled,
-              ]}
-              onPress={sendMessage}
-              disabled={(!chatInput.trim() && !chatImageUri) || isSendingImage}
-            >
-              {isSendingImage ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <ThemedText style={styles.sendBtnText}>↑</ThemedText>
               )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      )}
+              {chatImageUri && (
+                <View style={styles.chatImagePreviewWrap}>
+                  <Image source={{ uri: chatImageUri }} style={styles.chatImagePreview} />
+                  <TouchableOpacity style={styles.removeChatImageBtn} onPress={() => setChatImageUri(null)} accessibilityRole="button" accessibilityLabel="Remove attached image">
+                    <ThemedText style={styles.removeChatImageText}>✕</ThemedText>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <View style={styles.inputRow}>
+                <Button style={styles.pickImageBtn} variant="secondary" onPress={pickChatImage} label="Add image" accessibilityLabel="Attach image" />
+                <TextInput
+                  style={styles.chatInput}
+                  value={chatInput}
+                  onChangeText={setChatInput}
+                  placeholder={`Message ${community?.name ?? 'community'}…`}
+                  placeholderTextColor="#A1A1AA"
+                  returnKeyType="send"
+                  onSubmitEditing={sendMessage}
+                  multiline
+                  maxLength={500}
+                />
+                <Button
+                  style={[
+                    styles.sendBtn,
+                    (!chatInput.trim() && !chatImageUri) && styles.sendBtnDisabled,
+                    isSendingImage && styles.sendBtnDisabled,
+                  ]}
+                  label={isSendingImage ? '' : '↑'}
+                  onPress={handleSendMessagePress}
+                  loading={isSendingImage}
+                  disabled={(!chatInput.trim() && !chatImageUri) || isSendingImage}
+                  accessibilityLabel="Send chat message"
+                />
+              </View>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        )}
+      </Animated.View>
 
       <Modal
         visible={showThreadComposer}
@@ -531,7 +602,7 @@ export default function CommunityDetailScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Create Thread</ThemedText>
-              <TouchableOpacity onPress={() => setShowThreadComposer(false)}>
+              <TouchableOpacity onPress={() => setShowThreadComposer(false)} accessibilityRole="button" accessibilityLabel="Close thread composer">
                 <ThemedText style={styles.modalClose}>✕</ThemedText>
               </TouchableOpacity>
             </View>
@@ -558,12 +629,12 @@ export default function CommunityDetailScreen() {
             {threadMediaUri ? (
               <View style={styles.threadMediaPreviewWrap}>
                 <Image source={{ uri: threadMediaUri }} style={styles.threadMediaPreview} />
-                <TouchableOpacity style={styles.removeThreadMediaBtn} onPress={() => setThreadMediaUri(null)}>
+                <TouchableOpacity style={styles.removeThreadMediaBtn} onPress={() => setThreadMediaUri(null)} accessibilityRole="button" accessibilityLabel="Remove thread image">
                   <ThemedText style={styles.removeThreadMediaText}>✕</ThemedText>
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.addThreadImageBtn} onPress={pickThreadMedia}>
+              <TouchableOpacity style={styles.addThreadImageBtn} onPress={pickThreadMedia} accessibilityRole="button" accessibilityLabel="Add image to thread">
                 <ThemedText style={styles.addThreadImageText}>+ Add image</ThemedText>
               </TouchableOpacity>
             )}
@@ -574,6 +645,9 @@ export default function CommunityDetailScreen() {
                   key={flair}
                   style={[styles.flairChip, threadFlair === flair && styles.flairChipActive]}
                   onPress={() => setThreadFlair(flair)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Set thread flair to ${flair}`}
+                  accessibilityState={{ selected: threadFlair === flair }}
                 >
                   <ThemedText
                     style={[styles.flairChipText, threadFlair === flair && styles.flairChipTextActive]}
@@ -584,17 +658,13 @@ export default function CommunityDetailScreen() {
               ))}
             </View>
 
-            <TouchableOpacity
+            <Button
               style={[styles.publishThreadBtn, isCreatingThread && styles.publishThreadBtnDisabled]}
+              label="Publish Thread"
               onPress={submitThread}
+              loading={isCreatingThread}
               disabled={isCreatingThread}
-            >
-              {isCreatingThread ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <ThemedText style={styles.publishThreadText}>Publish Thread</ThemedText>
-              )}
-            </TouchableOpacity>
+            />
           </View>
         </View>
       </Modal>
@@ -609,13 +679,13 @@ export default function CommunityDetailScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Community Details</ThemedText>
-              <TouchableOpacity onPress={() => setShowCommunityDetails(false)}>
+              <TouchableOpacity onPress={() => setShowCommunityDetails(false)} accessibilityRole="button" accessibilityLabel="Close community details">
                 <ThemedText style={styles.modalClose}>✕</ThemedText>
               </TouchableOpacity>
             </View>
 
             {isLoadingDetails ? (
-              <ActivityIndicator color="#7C3AED" style={styles.loader} />
+              <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
             ) : (
               <>
                 <View style={styles.detailsTopRow}>
@@ -624,7 +694,7 @@ export default function CommunityDetailScreen() {
                   ) : (
                     <View style={styles.detailsIconFallback}>
                       <ThemedText style={styles.detailsIconEmoji}>
-                        {resolvedCommunity?.icon_emoji || '🐾'}
+                        {(resolvedCommunity?.name || 'C').charAt(0).toUpperCase()}
                       </ThemedText>
                     </View>
                   )}
@@ -677,17 +747,13 @@ export default function CommunityDetailScreen() {
                 </ScrollView>
 
                 {resolvedCommunity?.is_member ? (
-                  <TouchableOpacity
+                  <Button
                     style={[styles.leaveCommunityBtn, isLeavingCommunity && styles.publishThreadBtnDisabled]}
+                    label="Leave Group"
                     onPress={handleLeaveCommunity}
+                    loading={isLeavingCommunity}
                     disabled={isLeavingCommunity}
-                  >
-                    {isLeavingCommunity ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <ThemedText style={styles.leaveCommunityBtnText}>Leave Group</ThemedText>
-                    )}
-                  </TouchableOpacity>
+                  />
                 ) : null}
               </>
             )}
@@ -699,66 +765,71 @@ export default function CommunityDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9F9FB' },
+  safeArea: { flex: 1, backgroundColor: colors.bg.app },
   tabRow: {
+    position: 'relative',
     flexDirection: 'row',
-    padding: 12,
-    gap: 8,
-    backgroundColor: '#fff',
+    marginHorizontal: spacing.sm,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    padding: spacing.xxs,
+    gap: spacing.xs,
+    backgroundColor: colors.bg.muted,
+    borderRadius: radius.pill,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
+    borderBottomColor: colors.border.soft,
+  },
+  tabIndicator: {
+    position: 'absolute',
+    left: spacing.xxs,
+    top: spacing.xxs,
+    bottom: spacing.xxs,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brand.primary,
   },
   tab: {
     flex: 1,
-    paddingVertical: 9,
-    borderRadius: 20,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
     alignItems: 'center',
-    backgroundColor: '#F4F4F5',
+    backgroundColor: 'transparent',
   },
-  tabActive: { backgroundColor: '#7C3AED' },
-  tabText: { fontSize: 13, fontWeight: '600', color: '#52525B' },
-  tabTextActive: { color: '#fff' },
+  tabText: { fontSize: 13, fontWeight: typography.weight.semibold, color: colors.text.secondary },
+  tabTextActive: { color: colors.text.inverse },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#18181B',
+    fontWeight: typography.weight.extrabold,
+    color: colors.text.primary,
   },
   loader: { marginTop: 40 },
+  tabContentWrap: { flex: 1 },
+  tabContentFill: { flex: 1 },
   newThreadBtn: {
     alignSelf: 'flex-end',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 10,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    alignItems: 'center',
+    minHeight: 44,
+    minWidth: 140,
     marginBottom: 10,
   },
-  newThreadBtnText: {
-    color: '#52525B',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  listContent: { padding: 12 },
+  listContent: { padding: spacing.sm },
   chatContainer: { flex: 1 },
-  chatContent: { padding: 8, paddingBottom: 16 },
+  chatContent: { padding: spacing.xs, paddingBottom: spacing.md },
   replyComposerPreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#F4F4F5',
+    gap: spacing.xs,
+    backgroundColor: colors.bg.muted,
     marginHorizontal: 10,
     marginBottom: 6,
     marginTop: 8,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     padding: 8,
   },
   replyPreviewBar: {
     width: 3,
     alignSelf: 'stretch',
     borderRadius: 3,
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.brand.primary,
   },
   replyPreviewTextWrap: {
     flex: 1,
@@ -766,47 +837,43 @@ const styles = StyleSheet.create({
   },
   replyComposerTitle: {
     fontSize: 11,
-    color: '#7C3AED',
-    fontWeight: '700',
+    color: colors.brand.primary,
+    fontWeight: typography.weight.bold,
   },
   replyComposerText: {
     fontSize: 12,
-    color: '#52525B',
+    color: colors.text.secondary,
   },
   replyComposerClose: {
     fontSize: 14,
-    color: '#71717A',
-    fontWeight: '700',
+    color: colors.text.secondary,
+    fontWeight: typography.weight.bold,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 10,
-    gap: 8,
-    backgroundColor: '#fff',
+    padding: spacing.sm,
+    gap: spacing.xs,
+    backgroundColor: colors.bg.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E4E4E7',
+    borderTopColor: colors.border.soft,
   },
   chatInput: {
     flex: 1,
-    backgroundColor: '#F4F4F5',
-    borderRadius: 22,
-    paddingHorizontal: 16,
+    backgroundColor: colors.bg.muted,
+    borderRadius: radius.pill,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#18181B',
+    color: colors.text.primary,
     maxHeight: 100,
   },
   pickImageBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F4F4F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pickImageText: {
-    fontSize: 18,
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: 0,
+    borderRadius: radius.pill,
   },
   chatImagePreviewWrap: {
     marginHorizontal: 10,
@@ -839,15 +906,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: 0,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brand.primary,
   },
-  sendBtnDisabled: { backgroundColor: '#E4E4E7' },
-  sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  sendBtnDisabled: { backgroundColor: colors.border.strong },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -855,8 +920,8 @@ const styles = StyleSheet.create({
   },
   modalSheet: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
     padding: 14,
     gap: 10,
   },
@@ -867,30 +932,30 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#18181B',
+    fontWeight: typography.weight.extrabold,
+    color: colors.text.primary,
   },
   modalClose: {
     fontSize: 16,
-    color: '#71717A',
-    fontWeight: '700',
+    color: colors.text.secondary,
+    fontWeight: typography.weight.bold,
   },
   threadTitleInput: {
     borderWidth: 1.5,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
+    borderColor: colors.border.soft,
+    borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#18181B',
+    color: colors.text.primary,
     fontSize: 15,
   },
   threadContentInput: {
     borderWidth: 1.5,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
+    borderColor: colors.border.soft,
+    borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#18181B',
+    color: colors.text.primary,
     fontSize: 14,
     minHeight: 90,
     textAlignVertical: 'top',
@@ -898,16 +963,16 @@ const styles = StyleSheet.create({
   addThreadImageBtn: {
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#DDD6FE',
-    backgroundColor: '#F5F3FF',
-    borderRadius: 10,
+    borderColor: colors.border.strong,
+    backgroundColor: colors.bg.subtle,
+    borderRadius: radius.sm,
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
   addThreadImageText: {
     fontSize: 12,
-    color: '#6D28D9',
-    fontWeight: '700',
+    color: colors.brand.primaryDark,
+    fontWeight: typography.weight.bold,
   },
   threadMediaPreviewWrap: {
     borderRadius: 12,
@@ -941,39 +1006,33 @@ const styles = StyleSheet.create({
   },
   flairChip: {
     borderWidth: 1,
-    borderColor: '#DDD6FE',
-    borderRadius: 16,
+    borderColor: colors.border.strong,
+    borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#F5F3FF',
+    backgroundColor: colors.bg.subtle,
   },
   flairChipActive: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
+    backgroundColor: colors.brand.primary,
+    borderColor: colors.brand.primary,
   },
   flairChipText: {
-    color: '#5B21B6',
+    color: colors.brand.primaryDark,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: typography.weight.bold,
     textTransform: 'capitalize',
   },
   flairChipTextActive: {
-    color: '#fff',
+    color: colors.text.inverse,
   },
   publishThreadBtn: {
     marginTop: 4,
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
+    backgroundColor: colors.brand.primary,
+    borderRadius: radius.md,
+    minHeight: 44,
   },
   publishThreadBtnDisabled: {
     opacity: 0.6,
-  },
-  publishThreadText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
   },
   detailsTopRow: {
     flexDirection: 'row',
@@ -991,7 +1050,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F4F4F5',
+    backgroundColor: colors.bg.muted,
   },
   detailsIconEmoji: {
     fontSize: 30,
@@ -1001,17 +1060,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   detailsCommunityName: {
-    color: '#18181B',
+    color: colors.text.primary,
     fontSize: 18,
     fontWeight: '800',
   },
   detailsMemberCount: {
-    color: '#71717A',
+    color: colors.text.secondary,
     fontSize: 13,
     fontWeight: '600',
   },
   detailsDescription: {
-    color: '#3F3F46',
+    color: colors.text.secondary,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -1029,7 +1088,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ECECF1',
+    borderBottomColor: colors.border.soft,
   },
   memberAvatar: {
     width: 36,
@@ -1044,24 +1103,24 @@ const styles = StyleSheet.create({
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E4E4E7',
+    backgroundColor: colors.border.soft,
   },
   memberAvatarFallbackText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#3F3F46',
+    color: colors.text.secondary,
   },
   memberTextWrap: {
     flex: 1,
     gap: 1,
   },
   memberName: {
-    color: '#18181B',
+    color: colors.text.primary,
     fontSize: 13,
     fontWeight: '700',
   },
   memberHandle: {
-    color: '#71717A',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   noMembersText: {
@@ -1085,18 +1144,9 @@ const styles = StyleSheet.create({
   },
   leaveCommunityBtn: {
     marginTop: 8,
-    backgroundColor: '#DC2626',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
+    backgroundColor: colors.state.danger,
+    borderRadius: radius.md,
+    minHeight: 44,
   },
-  leaveCommunityBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  empty: { alignItems: 'center', padding: 40, gap: 10 },
-  emptyEmoji: { fontSize: 40 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#18181B' },
-  emptySubtext: { fontSize: 14, color: '#71717A', textAlign: 'center' },
+  emptyWrap: { padding: spacing.xl },
 });

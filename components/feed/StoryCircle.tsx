@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Story } from '@/store/feedStore';
 
@@ -25,7 +26,7 @@ export function StoryCircle({ story, onPress, isOwn, showAddBadge }: StoryCircle
             <Image source={{ uri: story.avatar_url }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, styles.fallback]}>
-              <ThemedText style={styles.fallbackText}>🐾</ThemedText>
+              <Ionicons name="paw" size={22} color="#7C3AED" />
             </View>
           )}
           {showAddBadge && (
@@ -69,9 +70,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  fallbackText: {
-    fontSize: 24,
   },
   addBadge: {
     position: 'absolute',

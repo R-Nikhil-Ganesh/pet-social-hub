@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   View,
   Image,
   StyleSheet,
@@ -7,6 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PetTag } from '@/components/ui/PetTag';
@@ -24,6 +26,39 @@ export function PostCard({ post }: PostCardProps) {
   const router = useRouter();
   const reactToPost = useFeedStore((s) => s.reactToPost);
   const [showReactions, setShowReactions] = useState(false);
+  const cardScale = useRef(new Animated.Value(1)).current;
+  const reactionAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!showReactions) {
+      reactionAnim.setValue(0);
+      return;
+    }
+
+    Animated.timing(reactionAnim, {
+      toValue: 1,
+      duration: 170,
+      useNativeDriver: true,
+    }).start();
+  }, [reactionAnim, showReactions]);
+
+  const onCardPressIn = () => {
+    Animated.spring(cardScale, {
+      toValue: 0.985,
+      useNativeDriver: true,
+      speed: 36,
+      bounciness: 0,
+    }).start();
+  };
+
+  const onCardPressOut = () => {
+    Animated.spring(cardScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 0,
+    }).start();
+  };
 
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
@@ -35,12 +70,14 @@ export function PostCard({ post }: PostCardProps) {
   };
 
   return (
-    <View style={styles.card}>
+    <Animated.View style={[styles.card, { transform: [{ scale: cardScale }] }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.userRow}
           onPress={() => router.push(`/user/${post.user_id}`)}
+          onPressIn={onCardPressIn}
+          onPressOut={onCardPressOut}
         >
           <Avatar uri={post.avatar_url} size={42} />
           <View style={styles.userInfo}>
@@ -67,6 +104,8 @@ export function PostCard({ post }: PostCardProps) {
         <TouchableOpacity
           onPress={() => router.push(`/post/${post.id}`)}
           activeOpacity={0.95}
+          onPressIn={onCardPressIn}
+          onPressOut={onCardPressOut}
         >
           <Image
             source={{ uri: post.media_url }}
@@ -79,7 +118,7 @@ export function PostCard({ post }: PostCardProps) {
       {/* Location */}
       {post.location_name ? (
         <View style={styles.locationRow}>
-          <ThemedText style={styles.locationIcon}>📍</ThemedText>
+          <Ionicons name="location-outline" size={12} color="#71717A" />
           <ThemedText style={styles.location}>{post.location_name}</ThemedText>
         </View>
       ) : null}
@@ -90,6 +129,8 @@ export function PostCard({ post }: PostCardProps) {
           style={styles.actionBtn}
           onPress={() => setShowReactions(!showReactions)}
           onLongPress={() => setShowReactions(true)}
+          onPressIn={onCardPressIn}
+          onPressOut={onCardPressOut}
         >
           <ThemedText style={styles.actionIcon}>
             {post.user_reacted ? '🐾' : '🤍'}
@@ -100,19 +141,42 @@ export function PostCard({ post }: PostCardProps) {
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => router.push(`/post/${post.id}`)}
+          onPressIn={onCardPressIn}
+          onPressOut={onCardPressOut}
         >
-          <ThemedText style={styles.actionIcon}>💬</ThemedText>
+          <Ionicons name="chatbubble-outline" size={18} color="#52525B" />
           <ThemedText style={styles.actionCount}>{post.comment_count}</ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionBtn}>
-          <ThemedText style={styles.actionIcon}>↗️</ThemedText>
+          <Ionicons name="arrow-redo-outline" size={18} color="#52525B" />
         </TouchableOpacity>
       </View>
 
       {/* Reaction Picker */}
       {showReactions && (
-        <View style={styles.reactionPicker}>
+        <Animated.View
+          style={[
+            styles.reactionPicker,
+            {
+              opacity: reactionAnim,
+              transform: [
+                {
+                  translateY: reactionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [8, 0],
+                  }),
+                },
+                {
+                  scale: reactionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.98, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           {REACTIONS.map((emoji) => (
             <TouchableOpacity
               key={emoji}
@@ -125,9 +189,9 @@ export function PostCard({ post }: PostCardProps) {
               <ThemedText style={styles.reactionEmoji}>{emoji}</ThemedText>
             </TouchableOpacity>
           ))}
-        </View>
+        </Animated.View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -205,7 +269,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 4,
   },
-  locationIcon: { fontSize: 12 },
   location: {
     fontSize: 12,
     color: '#71717A',

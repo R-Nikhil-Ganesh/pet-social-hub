@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 
 interface PetTagProps {
@@ -12,11 +13,11 @@ interface PetTagProps {
 
 export function PetTag({ breed, age, species, compact, onPress }: PetTagProps) {
   const ageLabel = age < 1 ? 'Puppy' : age === 1 ? '1 yr' : `${age} yrs`;
-  const emoji = species === 'cat' ? '🐱' : species === 'bird' ? '🐦' : '🐶';
+  const iconName = species === 'cat' ? 'logo-octocat' : species === 'bird' ? 'logo-twitter' : 'paw-outline';
 
   const content = (
     <>
-      <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+      <Ionicons name={iconName} size={13} color="#6B21A8" style={styles.icon} />
       <ThemedText style={[styles.text, compact && styles.textCompact]}>{breed}</ThemedText>
       <View style={styles.dot} />
       <ThemedText style={[styles.text, compact && styles.textCompact]}>{ageLabel}</ThemedText>
@@ -45,8 +46,8 @@ const styles = StyleSheet.create({
     gap: 4,
     alignSelf: 'flex-start',
   },
-  emoji: {
-    fontSize: 13,
+  icon: {
+    marginRight: 1,
   },
   text: {
     fontSize: 12,

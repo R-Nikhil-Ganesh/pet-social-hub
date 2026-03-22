@@ -15,8 +15,12 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useCommunityStore, ThreadReply } from '@/store/communityStore';
 import { useAuthStore } from '@/store/authStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 interface ReplyRowProps {
   reply: ThreadReply;
@@ -38,12 +42,22 @@ function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
   };
 
   return (
-    <View style={[styles.replyContainer, { marginLeft: depth * 20 }]}>
+    <Card style={[styles.replyContainer, { marginLeft: depth * 20 }]}>
       <View style={styles.replyHeader}>
-        <TouchableOpacity onPress={() => onUserPress(reply.user_id)} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => onUserPress(reply.user_id)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${reply.display_name} profile`}
+        >
           <Avatar uri={reply.avatar_url} size={28} isProfessional={reply.is_professional} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onUserPress(reply.user_id)} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => onUserPress(reply.user_id)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${reply.display_name} profile`}
+        >
           <ThemedText style={styles.replyAuthor}>{reply.display_name}</ThemedText>
         </TouchableOpacity>
         <ThemedText style={styles.replyTime}>{timeAgo(reply.created_at)}</ThemedText>
@@ -53,12 +67,19 @@ function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
         <TouchableOpacity
           onPress={() => upvoteReply(reply.id)}
           style={[styles.replyUpvote, reply.user_upvoted && styles.replyUpvotedBtn]}
+          accessibilityRole="button"
+          accessibilityLabel={reply.user_upvoted ? 'Remove upvote from reply' : 'Upvote reply'}
+          accessibilityState={{ selected: reply.user_upvoted }}
         >
           <ThemedText style={[styles.replyUpvoteText, reply.user_upvoted && styles.replyUpvoteActive]}>
             ▲ {reply.upvotes}
           </ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onReply(reply.id, reply.username)}>
+        <TouchableOpacity
+          onPress={() => onReply(reply.id, reply.username)}
+          accessibilityRole="button"
+          accessibilityLabel={`Reply to ${reply.display_name}`}
+        >
           <ThemedText style={styles.replyBtn}>↩ Reply</ThemedText>
         </TouchableOpacity>
       </View>
@@ -71,7 +92,7 @@ function ReplyRow({ reply, depth = 0, onReply, onUserPress }: ReplyRowProps) {
           onUserPress={onUserPress}
         />
       ))}
-    </View>
+    </Card>
   );
 }
 
@@ -117,7 +138,7 @@ export default function ThreadDetailScreen() {
   if (!activeThread) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color="#7C3AED" size="large" />
+        <ActivityIndicator color={colors.brand.primary} size="large" />
       </View>
     );
   }
@@ -139,10 +160,15 @@ export default function ThreadDetailScreen() {
           )}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
-            <View style={styles.threadCard}>
+            <Card style={styles.threadCard}>
               {/* Thread OP */}
               <View style={styles.opHeader}>
-                <TouchableOpacity onPress={() => goToUserProfile(activeThread.user_id)} activeOpacity={0.8}>
+                <TouchableOpacity
+                  onPress={() => goToUserProfile(activeThread.user_id)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${activeThread.display_name} profile`}
+                >
                   <Avatar
                     uri={activeThread.avatar_url}
                     size={40}
@@ -150,12 +176,22 @@ export default function ThreadDetailScreen() {
                   />
                 </TouchableOpacity>
                 <View style={styles.opMeta}>
-                  <TouchableOpacity onPress={() => goToUserProfile(activeThread.user_id)} activeOpacity={0.8}>
+                  <TouchableOpacity
+                    onPress={() => goToUserProfile(activeThread.user_id)}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${activeThread.display_name} profile`}
+                  >
                     <ThemedText style={styles.opName}>{activeThread.display_name}</ThemedText>
                     <ThemedText style={styles.opUsername}>@{activeThread.username}</ThemedText>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => upvoteThread(activeThread.id)}>
+                <TouchableOpacity
+                  onPress={() => upvoteThread(activeThread.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={activeThread.user_upvoted ? 'Remove upvote from thread' : 'Upvote thread'}
+                  accessibilityState={{ selected: activeThread.user_upvoted }}
+                >
                   <View style={[styles.upvoteBtn, activeThread.user_upvoted && styles.upvotedBtn]}>
                     <ThemedText
                       style={[styles.upvoteText, activeThread.user_upvoted && styles.upvoteActive]}
@@ -171,10 +207,11 @@ export default function ThreadDetailScreen() {
                 <Image source={{ uri: activeThread.media_url }} style={styles.threadImage} resizeMode="cover" />
               ) : null}
               <ThemedText style={styles.repliesLabel}>
-                💬 {activeThread.reply_count} replies
+                {activeThread.reply_count} replies
               </ThemedText>
-            </View>
+            </Card>
           }
+          ListEmptyComponent={<EmptyState iconName="chatbubble-outline" iconColor={colors.text.secondary} title="No replies yet" subtitle="Start the discussion with the first reply." />}
           showsVerticalScrollIndicator={false}
         />
 
@@ -185,7 +222,11 @@ export default function ThreadDetailScreen() {
               <ThemedText style={styles.replyingToText}>
                 Replying to @{replyingTo.username}
               </ThemedText>
-              <TouchableOpacity onPress={() => setReplyingTo(null)}>
+              <TouchableOpacity
+                onPress={() => setReplyingTo(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel reply"
+              >
                 <ThemedText style={styles.replyingToClose}>✕</ThemedText>
               </TouchableOpacity>
             </View>
@@ -201,17 +242,14 @@ export default function ThreadDetailScreen() {
               multiline
               maxLength={1000}
             />
-            <TouchableOpacity
+            <Button
               style={[styles.sendBtn, (!replyInput.trim() || isSubmitting) && styles.sendBtnOff]}
+              label={isSubmitting ? '' : '↑'}
               onPress={handleReply}
+              loading={isSubmitting}
               disabled={!replyInput.trim() || isSubmitting}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <ThemedText style={styles.sendText}>↑</ThemedText>
-              )}
-            </TouchableOpacity>
+              accessibilityLabel="Send reply"
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -220,108 +258,99 @@ export default function ThreadDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9F9FB' },
+  safeArea: { flex: 1, backgroundColor: colors.bg.app },
   flex: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  listContent: { padding: 12, paddingBottom: 20 },
+  listContent: { padding: spacing.sm, paddingBottom: spacing.lg },
   threadCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
   },
-  opHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  opHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   opMeta: { flex: 1 },
-  opName: { fontSize: 14, fontWeight: '700', color: '#18181B' },
-  opUsername: { fontSize: 12, color: '#71717A' },
+  opName: { fontSize: typography.size.sm, fontWeight: typography.weight.bold, color: colors.text.primary },
+  opUsername: { fontSize: typography.size.xs, color: colors.text.secondary },
   upvoteBtn: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    borderRadius: radius.sm,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
     paddingVertical: 5,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: colors.bg.muted,
   },
-  upvotedBtn: { backgroundColor: '#EDE9FE' },
-  upvoteText: { fontSize: 14, fontWeight: '700', color: '#52525B' },
-  upvoteActive: { color: '#7C3AED' },
-  threadTitle: { fontSize: 18, fontWeight: '800', color: '#18181B', lineHeight: 24 },
+  upvotedBtn: { backgroundColor: colors.bg.subtle },
+  upvoteText: { fontSize: typography.size.sm, fontWeight: typography.weight.bold, color: colors.text.secondary },
+  upvoteActive: { color: colors.brand.primary },
+  threadTitle: { fontSize: typography.size.lg, fontWeight: typography.weight.extrabold, color: colors.text.primary, lineHeight: 24 },
   threadContent: { fontSize: 14, color: '#27272A', lineHeight: 21 },
   threadImage: {
     width: '100%',
     height: 190,
-    borderRadius: 12,
+    borderRadius: radius.md,
   },
-  repliesLabel: { fontSize: 13, color: '#71717A', fontWeight: '500' },
+  repliesLabel: { fontSize: 13, color: colors.text.secondary, fontWeight: typography.weight.medium },
   replyContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.xs,
+    gap: spacing.xs,
   },
   replyHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  replyAuthor: { flex: 1, fontSize: 13, fontWeight: '600', color: '#18181B' },
-  replyTime: { fontSize: 11, color: '#A1A1AA' },
+  replyAuthor: { flex: 1, fontSize: 13, fontWeight: typography.weight.semibold, color: colors.text.primary },
+  replyTime: { fontSize: 11, color: colors.text.muted },
   replyContent: { fontSize: 14, color: '#27272A', lineHeight: 20 },
-  replyActions: { flexDirection: 'row', gap: 16, alignItems: 'center' },
+  replyActions: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
   replyUpvote: {
-    paddingHorizontal: 8,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
     paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#F4F4F5',
+    borderRadius: radius.sm,
+    backgroundColor: colors.bg.muted,
   },
-  replyUpvotedBtn: { backgroundColor: '#EDE9FE' },
-  replyUpvoteText: { fontSize: 12, fontWeight: '600', color: '#52525B' },
-  replyUpvoteActive: { color: '#7C3AED' },
-  replyBtn: { fontSize: 12, color: '#71717A', fontWeight: '600' },
+  replyUpvotedBtn: { backgroundColor: colors.bg.subtle },
+  replyUpvoteText: { fontSize: 12, fontWeight: typography.weight.semibold, color: colors.text.secondary },
+  replyUpvoteActive: { color: colors.brand.primary },
+  replyBtn: { fontSize: 12, color: colors.text.secondary, fontWeight: typography.weight.semibold },
   inputArea: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.bg.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E4E4E7',
+    borderTopColor: colors.border.soft,
   },
   replyingToBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingTop: 8,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xs,
   },
-  replyingToText: { fontSize: 12, color: '#7C3AED', fontWeight: '600' },
-  replyingToClose: { fontSize: 14, color: '#A1A1AA', padding: 4 },
+  replyingToText: { fontSize: 12, color: colors.brand.primary, fontWeight: typography.weight.semibold },
+  replyingToClose: { fontSize: 14, color: colors.text.muted, padding: 4 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 10,
-    gap: 8,
+    padding: spacing.sm,
+    gap: spacing.xs,
   },
   input: {
     flex: 1,
-    backgroundColor: '#F4F4F5',
-    borderRadius: 20,
-    paddingHorizontal: 14,
+    backgroundColor: colors.bg.muted,
+    borderRadius: radius.pill,
+    minHeight: 44,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 10,
-    fontSize: 15,
-    color: '#18181B',
+    fontSize: typography.size.sm,
+    color: colors.text.primary,
     maxHeight: 120,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: 0,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brand.primary,
   },
-  sendBtnOff: { backgroundColor: '#E4E4E7' },
-  sendText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  sendBtnOff: { backgroundColor: colors.border.strong },
 });

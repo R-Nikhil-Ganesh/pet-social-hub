@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 
 interface PointsBadgeProps {
@@ -19,7 +20,7 @@ export function PointsBadge({ points, size = 'md', onPress, showLabel }: PointsB
 
   const content = (
     <>
-      <ThemedText style={[styles.paw, { fontSize }]}>🐾</ThemedText>
+      <Ionicons name="paw" size={fontSize + 1} color="#DDD6FE" style={styles.pawIcon} />
       <ThemedText style={[styles.points, { fontSize }]}>{formatted}</ThemedText>
       {showLabel && (
         <ThemedText style={[styles.label, { fontSize: fontSize - 2 }]}>pts</ThemedText>
@@ -50,8 +51,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 4,
   },
-  paw: {
-    lineHeight: 18,
+  pawIcon: {
+    marginRight: 1,
   },
   points: {
     color: '#fff',

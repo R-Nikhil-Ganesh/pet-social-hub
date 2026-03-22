@@ -6,13 +6,16 @@ import {
   SafeAreaView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useNotificationStore } from '@/store/notificationStore';
 import api from '@/services/api';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -27,7 +30,7 @@ export default function NotificationsScreen() {
     };
 
     load();
-  }, []);
+  }, [fetchNotifications, markAllRead]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -79,7 +82,7 @@ export default function NotificationsScreen() {
         data={notifications}
         keyExtractor={(item) => `notification-${item.id}`}
         renderItem={({ item }) => (
-          <View style={[styles.card, !item.is_read && styles.cardUnread]}>
+          <Card style={[styles.card, !item.is_read && styles.cardUnread]}>
             <TouchableOpacity
               activeOpacity={0.85}
               style={styles.cardTop}
@@ -96,45 +99,44 @@ export default function NotificationsScreen() {
 
             {item.ref_type === 'event_group_request' && item.event_group_request?.status === 'pending' && (
               <View style={styles.requestActions}>
-                <TouchableOpacity
+                <Button
                   style={[styles.requestBtn, styles.acceptBtn]}
+                  label="Accept"
                   onPress={() => handleRequestAction(item.event_group_request!.id, 'accept')}
-                  disabled={requestBusyId === item.event_group_request.id}
-                >
-                  {requestBusyId === item.event_group_request.id ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <ThemedText style={styles.acceptBtnText}>Accept</ThemedText>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
+                  loading={requestBusyId === item.event_group_request.id}
+                  accessibilityLabel="Accept request"
+                />
+                <Button
                   style={[styles.requestBtn, styles.declineBtn]}
+                  variant="secondary"
+                  label="Decline"
                   onPress={() => handleRequestAction(item.event_group_request!.id, 'decline')}
                   disabled={requestBusyId === item.event_group_request.id}
-                >
-                  <ThemedText style={styles.declineBtnText}>Decline</ThemedText>
-                </TouchableOpacity>
+                  accessibilityLabel="Decline request"
+                />
               </View>
             )}
 
             {item.ref_type === 'event_group_request' && item.event_group_request?.status !== 'pending' && (
               <ThemedText style={styles.requestStatus}>Request {item.event_group_request?.status}</ThemedText>
             )}
-          </View>
+          </Card>
         )}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <ThemedText style={styles.emptyTitle}>No notifications yet</ThemedText>
-              <ThemedText style={styles.emptyText}>
-                Reactions and comments on your posts will show up here.
-              </ThemedText>
+              <EmptyState
+                iconName="notifications-outline"
+                iconColor={colors.text.secondary}
+                title="No notifications yet"
+                subtitle="Reactions and comments on your posts will show up here."
+              />
             </View>
           ) : null
         }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand.primary} />
         }
         showsVerticalScrollIndicator={false}
       />
@@ -145,92 +147,65 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F9F9FB',
+    backgroundColor: colors.bg.app,
   },
   listContent: {
-    padding: 16,
-    gap: 10,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   card: {
-    padding: 14,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    gap: 10,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    gap: spacing.sm,
   },
   cardTop: {
     flexDirection: 'row',
-    gap: 12,
+    minHeight: 44,
+    gap: spacing.sm,
     alignItems: 'center',
   },
   cardUnread: {
     borderWidth: 1,
-    borderColor: '#DDD6FE',
-    backgroundColor: '#FAF5FF',
+    borderColor: colors.border.strong,
+    backgroundColor: colors.bg.subtle,
   },
   content: {
     flex: 1,
     gap: 4,
   },
   message: {
-    fontSize: 14,
+    fontSize: typography.size.sm,
     lineHeight: 20,
-    color: '#18181B',
+    color: colors.text.primary,
   },
   meta: {
-    fontSize: 12,
-    color: '#71717A',
+    fontSize: typography.size.xs,
+    color: colors.text.secondary,
   },
   requestActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     marginLeft: 54,
   },
   requestBtn: {
-    minWidth: 80,
-    borderRadius: 10,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    minWidth: 92,
+    minHeight: 44,
   },
   acceptBtn: {
-    backgroundColor: '#16A34A',
-  },
-  acceptBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
+    backgroundColor: colors.state.success,
   },
   declineBtn: {
-    backgroundColor: '#F4F4F5',
-  },
-  declineBtnText: {
-    color: '#3F3F46',
-    fontSize: 12,
-    fontWeight: '700',
+    borderColor: colors.border.strong,
   },
   requestStatus: {
     marginLeft: 54,
-    fontSize: 12,
-    color: '#71717A',
-    fontWeight: '600',
+    fontSize: typography.size.xs,
+    color: colors.text.secondary,
+    fontWeight: typography.weight.semibold,
   },
   empty: {
     paddingVertical: 64,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#18181B',
-  },
-  emptyText: {
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-    color: '#71717A',
-    maxWidth: 240,
+    paddingHorizontal: spacing.md,
   },
 });

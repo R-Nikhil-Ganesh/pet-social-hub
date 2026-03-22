@@ -38,6 +38,16 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: true,
           headerBackTitleVisible: false,
+          headerStyle: {
+            backgroundColor: '#ffffff',
+          },
+          headerTintColor: '#18181B',
+          headerTitleStyle: {
+            fontWeight: '700',
+            fontSize: 17,
+            color: '#18181B',
+          },
+          headerShadowVisible: false,
         }}
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />

@@ -11,9 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { CommunityCard } from '@/components/community/CommunityCard';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useCommunityStore } from '@/store/communityStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type Tab = 'my' | 'discover';
 
@@ -28,7 +32,7 @@ export default function CommunityScreen() {
   useEffect(() => {
     fetchCommunities();
     fetchMyCommunities();
-  }, []);
+  }, [fetchCommunities, fetchMyCommunities]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -57,28 +61,31 @@ export default function CommunityScreen() {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <ThemedText style={styles.title}>🐾 Communities</ThemedText>
-        <TouchableOpacity
+        <View style={styles.titleRow}>
+          <Ionicons name="people-outline" size={20} color={colors.text.primary} />
+          <ThemedText variant="title" style={styles.title}>Communities</ThemedText>
+        </View>
+        <Button
           style={styles.createBtn}
-          onPress={() => router.push('/create-community')}
-        >
-          <ThemedText style={styles.createBtnText}>+ New</ThemedText>
-        </TouchableOpacity>
+          label="+ New"
+          onPress={() => router.push('/create-community' as never)}
+          accessibilityLabel="Create a new community"
+        />
       </View>
 
       {/* Search */}
       <View style={styles.searchWrapper}>
-        <ThemedText style={styles.searchIcon}>🔍</ThemedText>
+        <Ionicons name="search-outline" size={16} color={colors.text.muted} />
         <TextInput
           style={styles.searchInput}
           value={search}
           onChangeText={setSearch}
           placeholder="Search communities…"
-          placeholderTextColor="#A1A1AA"
+          placeholderTextColor={colors.text.muted}
           returnKeyType="search"
         />
         {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
+          <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn} accessibilityLabel="Clear search">
             <ThemedText style={styles.clearText}>✕</ThemedText>
           </TouchableOpacity>
         )}
@@ -91,9 +98,10 @@ export default function CommunityScreen() {
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
+            accessibilityRole="button"
           >
             <ThemedText style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab === 'my' ? '✅ My Communities' : '🌐 Discover'}
+              {tab === 'my' ? 'My Communities' : 'Discover'}
             </ThemedText>
           </TouchableOpacity>
         ))}
@@ -113,26 +121,25 @@ export default function CommunityScreen() {
         )}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand.primary} />
         }
         ListEmptyComponent={
           !isMembersLoading ? (
-            <View style={styles.empty}>
-              <ThemedText style={styles.emptyEmoji}>
-                {activeTab === 'my' ? '🏘️' : '🌍'}
-              </ThemedText>
-              <ThemedText style={styles.emptyTitle}>
-                {activeTab === 'my' ? 'No communities yet' : 'No results'}
-              </ThemedText>
-              <ThemedText style={styles.emptySubtext}>
-                {activeTab === 'my'
-                  ? 'Join breed communities to connect with other pet owners'
-                  : 'Try a different search term'}
-              </ThemedText>
+            <View style={styles.emptyWrap}>
+              <EmptyState
+                iconName={activeTab === 'my' ? 'home-outline' : 'compass-outline'}
+                iconColor={colors.text.secondary}
+                title={activeTab === 'my' ? 'No communities yet' : 'No results'}
+                subtitle={
+                  activeTab === 'my'
+                    ? 'Join breed communities to connect with other pet owners'
+                    : 'Try a different search term'
+                }
+              />
             </View>
           ) : null
         }
-        ListFooterComponent={isMembersLoading ? <ActivityIndicator color="#7C3AED" style={styles.loader} /> : null}
+        ListFooterComponent={isMembersLoading ? <ActivityIndicator color={colors.brand.primary} style={styles.loader} /> : null}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
@@ -140,66 +147,65 @@ export default function CommunityScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9F9FB' },
+  safeArea: { flex: 1, backgroundColor: colors.bg.app },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.bg.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
+    borderBottomColor: colors.border.soft,
   },
-  title: { fontSize: 20, fontWeight: '800', color: '#18181B' },
+  title: { color: colors.text.primary },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   createBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    minHeight: 44,
   },
-  createBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginVertical: 10,
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    backgroundColor: colors.bg.surface,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    borderRadius: radius.md,
+    minHeight: 48,
+    paddingHorizontal: spacing.sm,
     borderWidth: 1.5,
-    borderColor: '#E4E4E7',
-    gap: 8,
+    borderColor: colors.border.soft,
+    gap: spacing.xs,
   },
-  searchIcon: { fontSize: 16 },
   searchInput: {
     flex: 1,
-    paddingVertical: 11,
-    fontSize: 15,
-    color: '#18181B',
+    minHeight: 48,
+    fontSize: typography.size.sm,
+    color: colors.text.primary,
   },
-  clearBtn: { padding: 4 },
-  clearText: { fontSize: 14, color: '#A1A1AA' },
+  clearBtn: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  clearText: { fontSize: 16, color: colors.text.muted },
   tabRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.xs,
   },
   tab: {
     flex: 1,
-    paddingVertical: 9,
-    borderRadius: 20,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
     alignItems: 'center',
-    backgroundColor: '#F4F4F5',
+    backgroundColor: colors.bg.muted,
   },
-  tabActive: { backgroundColor: '#7C3AED' },
-  tabText: { fontSize: 13, fontWeight: '600', color: '#52525B' },
-  tabTextActive: { color: '#fff' },
-  listContent: { paddingHorizontal: 16, paddingBottom: 20 },
-  empty: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#18181B' },
-  emptySubtext: { fontSize: 14, color: '#71717A', textAlign: 'center', lineHeight: 20 },
-  loader: { paddingVertical: 20 },
+  tabActive: { backgroundColor: colors.brand.primary },
+  tabText: { fontSize: typography.size.sm, fontWeight: typography.weight.semibold, color: colors.text.secondary },
+  tabTextActive: { color: colors.text.inverse },
+  listContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg },
+  emptyWrap: { paddingTop: 60 },
+  loader: { paddingVertical: spacing.lg },
 });
