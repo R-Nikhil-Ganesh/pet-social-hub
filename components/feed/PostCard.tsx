@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
@@ -80,6 +81,12 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
     <Animated.View style={[styles.card, { transform: [{ scale: cardScale }] }]}>
+      <LinearGradient
+        colors={['#FFF4EA', '#FFEBDD']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cardGradient}
+      >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -210,21 +217,27 @@ export function PostCard({ post }: PostCardProps) {
           ))}
         </Animated.View>
       )}
+      </LinearGradient>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
+    shadowColor: '#B57E5E',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+  },
+  cardGradient: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -333,7 +346,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#F4F4F5',
+    borderTopColor: '#F0C5D6',
     gap: 20,
   },
   actionBtn: {

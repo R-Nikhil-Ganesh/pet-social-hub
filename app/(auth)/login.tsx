@@ -71,13 +71,13 @@ export default function LoginScreen() {
           {/* Logo / Hero */}
           <AnimatedEntrance delay={30}>
             <View style={styles.hero}>
-              <Image
-                source={require('../../assets/images/brand_logo.png')}
-                style={styles.brandLogo}
-                resizeMode="contain"
-              />
-              <ThemedText variant="display" style={styles.appName}>Pawprint</ThemedText>
-              <ThemedText variant="body" style={styles.tagline}>Where every pet is the star</ThemedText>
+              <View style={styles.brandLogoFrame}>
+                <Image
+                  source={require('../../assets/images/brand_logo.png')}
+                  style={styles.brandLogo}
+                  resizeMode="cover"
+                />
+              </View>
             </View>
           </AnimatedEntrance>
 
@@ -146,19 +146,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     gap: spacing.xs,
   },
+  brandLogoFrame: {
+    width: 220,
+    height: 210,
+    overflow: 'hidden',
+  },
   brandLogo: {
-    width: 96,
-    height: 96,
-  },
-  logo: {
-    fontSize: 60,
-  },
-  appName: {
-    color: colors.brand.primary,
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    color: colors.text.secondary,
+    width: '100%',
+    height: '100%',
   },
   form: {
     borderRadius: radius.xl,

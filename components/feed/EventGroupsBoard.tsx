@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import {
@@ -25,9 +26,9 @@ interface EventGroupsBoardProps {
   connections: ConnectionUser[];
 }
 
-const EVENT_ACCENT = '#6366F1';
-const EVENT_ACCENT_DARK = '#4F46E5';
-const EVENT_ACCENT_SOFT = '#EEF2FF';
+const EVENT_ACCENT = '#FF4FA3';
+const EVENT_ACCENT_DARK = '#E63A92';
+const EVENT_ACCENT_SOFT = '#FFE6F4';
 
 function relationLabel(connection: ConnectionUser) {
   if (connection.is_following && connection.is_follower) return 'Mutual';
@@ -105,6 +106,12 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
         {events.map((event) => (
           <View key={event.id} style={styles.eventCardShell}>
             <View style={styles.eventCard}>
+              <LinearGradient
+                colors={['#FFF4EA', '#FFECDD']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.eventCardGradient}
+              >
               {event.cover_url ? <Image source={{ uri: event.cover_url }} style={styles.eventCover} /> : null}
               <View style={styles.eventBody}>
               <ThemedText style={styles.eventDate}>{formatStartsAt(event.starts_at)}</ThemedText>
@@ -195,6 +202,7 @@ export function EventGroupsBoard({ events, connections }: EventGroupsBoardProps)
                 <ThemedText style={styles.createGroupBtnText}>Create Group</ThemedText>
               </TouchableOpacity>
             </View>
+            </LinearGradient>
           </View>
           </View>
         ))}
@@ -289,16 +297,21 @@ const styles = StyleSheet.create({
   },
   eventCardShell: {
     width: 290,
-    shadowColor: '#000',
+    shadowColor: '#B57E5E',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 3,
   },
   eventCard: {
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
+  },
+  eventCardGradient: {
+    borderRadius: 16,
   },
   eventCover: {
     width: '100%',
@@ -320,7 +333,7 @@ const styles = StyleSheet.create({
   },
   eventLocation: {
     fontSize: 12,
-    color: '#52525B',
+    color: '#7A355D',
   },
   locationRow: {
     flexDirection: 'row',
@@ -329,7 +342,7 @@ const styles = StyleSheet.create({
   },
   eventDescription: {
     fontSize: 12,
-    color: '#71717A',
+    color: '#8C4B67',
     lineHeight: 18,
   },
   groupListWrap: {
@@ -338,7 +351,7 @@ const styles = StyleSheet.create({
   },
   groupListTitle: {
     fontSize: 12,
-    color: '#52525B',
+    color: '#7A355D',
     fontWeight: '700',
   },
   groupRow: {
@@ -347,10 +360,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: '#F1B3C9',
     paddingHorizontal: 8,
     paddingVertical: 7,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'rgba(255,255,255,0.5)',
   },
   groupTextWrap: {
     flex: 1,
@@ -364,7 +377,7 @@ const styles = StyleSheet.create({
   },
   groupMeta: {
     fontSize: 11,
-    color: '#71717A',
+    color: '#8C4B67',
   },
   groupAvatars: {
     flexDirection: 'row',
@@ -379,7 +392,7 @@ const styles = StyleSheet.create({
   createGroupBtn: {
     marginTop: 6,
     borderRadius: 10,
-    backgroundColor: EVENT_ACCENT,
+    backgroundColor: '#F97316',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 9,
@@ -399,7 +412,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF4EA',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     paddingTop: 16,
@@ -428,7 +441,7 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: '#F1B3C9',
     padding: 10,
   },
   connectionRowSelected: {
@@ -472,7 +485,7 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D4D4D8',
+    borderColor: '#F1B3C9',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -11,8 +11,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { AnimatedEntrance } from '@/components/ui/AnimatedEntrance';
+import { GradientBackground } from '@/components/ui/GradientBackground';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -74,7 +76,8 @@ export default function ProfileScreen() {
   const isProfessional = Boolean(user.is_professional);
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <GradientBackground>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
       <MenuPopover
         visible={menuVisible}
         onDismiss={() => setMenuVisible(false)}
@@ -209,15 +212,22 @@ export default function ProfileScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Open ${pet.name} profile`}
                 >
-                  {pet.photo_url ? (
-                    <Image source={{ uri: pet.photo_url }} style={styles.petPhoto} />
-                  ) : (
-                    <View style={[styles.petPhoto, styles.petPhotoFallback]}>
-                      <Ionicons name="paw" size={24} color={colors.brand.primary} />
-                    </View>
-                  )}
-                  <ThemedText style={styles.petName}>{pet.name}</ThemedText>
-                  <PetTag breed={pet.breed} age={pet.age} compact />
+                  <LinearGradient
+                    colors={['#FFF4EA', '#FFECDD']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.petCardInner}
+                  >
+                    {pet.photo_url ? (
+                      <Image source={{ uri: pet.photo_url }} style={styles.petPhoto} />
+                    ) : (
+                      <View style={[styles.petPhoto, styles.petPhotoFallback]}>
+                        <Ionicons name="paw" size={24} color={colors.brand.primary} />
+                      </View>
+                    )}
+                    <ThemedText style={styles.petName}>{pet.name}</ThemedText>
+                    <PetTag breed={pet.breed} age={pet.age} compact />
+                  </LinearGradient>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -243,12 +253,13 @@ export default function ProfileScreen() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.bg.app },
+  safeArea: { flex: 1, backgroundColor: 'transparent' },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -359,16 +370,30 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.text.primary },
   sectionActionBtn: { minHeight: 44, justifyContent: 'center' },
   sectionAction: { color: colors.brand.primary },
-  petRow: { gap: spacing.sm, paddingBottom: spacing.xs },
+  petRow: { gap: spacing.sm, paddingBottom: spacing.xs, paddingRight: spacing.md },
   petCard: {
+    width: 128,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
+    overflow: 'hidden',
+    shadowColor: '#B57E5E',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  petCardInner: {
     alignItems: 'center',
     gap: spacing.xs,
-    width: 90,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    minHeight: 164,
   },
   petPhoto: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 84,
+    height: 84,
+    borderRadius: 22,
   },
   petPhotoFallback: {
     backgroundColor: colors.bg.subtle,
@@ -376,7 +401,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   petPhotoEmoji: { fontSize: 32 },
-  petName: { fontSize: 13, fontWeight: typography.weight.bold, color: colors.text.primary, textAlign: 'center' },
+  petName: {
+    fontSize: 13,
+    fontWeight: typography.weight.bold,
+    color: colors.text.primary,
+    textAlign: 'center',
+    maxWidth: 104,
+  },
   emptyPetsCard: {
     backgroundColor: colors.bg.surface,
     padding: spacing.lg,

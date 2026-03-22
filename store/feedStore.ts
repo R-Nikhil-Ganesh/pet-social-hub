@@ -234,6 +234,9 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   respondToEventRequest: async (requestId, action) => {
     const { data } = await api.post(`/event-groups/requests/${requestId}/respond`, { action });
     set({ eventRequests: get().eventRequests.filter((request) => request.id !== requestId) });
+    if (action === 'accept') {
+      await get().fetchEvents();
+    }
     return {
       community_id: data?.community_id,
     };

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StoryCircle } from './StoryCircle';
 import { Story, useFeedStore } from '@/store/feedStore';
 import { useAuthStore } from '@/store/authStore';
@@ -31,7 +32,12 @@ export function StoryRow() {
   }, []);
 
   return (
-    <View style={styles.wrapper}>
+    <LinearGradient
+      colors={['#FFF4EA', '#FFECDD']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.wrapper}
+    >
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -78,17 +84,16 @@ export function StoryRow() {
             />
           ))}
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#fff',
     paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F4F4F5',
-    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1B3C9',
+    marginBottom: 0,
   },
   scrollContent: {
     paddingHorizontal: 16,

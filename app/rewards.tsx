@@ -162,9 +162,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.soft,
   },
-  tab: { flex: 1, minHeight: 48, borderRadius: 0 },
+  tab: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tabActive: { borderBottomWidth: 2, borderBottomColor: colors.brand.primary, backgroundColor: colors.bg.subtle },
-  tabText: { fontSize: typography.size.sm, color: colors.text.secondary, fontWeight: typography.weight.semibold },
+  tabText: {
+    fontSize: typography.size.sm,
+    color: colors.text.secondary,
+    fontWeight: typography.weight.semibold,
+    textAlign: 'center',
+  },
   tabTextActive: { color: colors.brand.primary },
   list: { padding: spacing.sm, gap: spacing.sm },
   rewardCard: {

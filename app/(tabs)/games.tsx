@@ -3,18 +3,21 @@ import {
   View,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
+import { GradientBackground } from '@/components/ui/GradientBackground';
 import { GameCard } from '@/components/games/GameCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { Avatar } from '@/components/ui/Avatar';
-import { TouchableScale } from '@/components/ui/TouchableScale';
+import { WiggleSticker } from '@/components/ui/WiggleSticker';
 import { useGameStore, GameMode } from '@/store/gameStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
@@ -22,16 +25,19 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const GAMES: GameMode[] = ['trivia', 'photo_contest', 'training', 'breed_guess'];
 const GAME_IMAGES: Partial<Record<GameMode, any>> = {
-  trivia: require('../../assets/images/trivia.png'),
-  photo_contest: require('../../assets/images/photo-contest.png'),
-  breed_guess: require('../../assets/images/guess-breed.png'),
+  trivia: require('../../assets/images/trivia.jpg'),
+  photo_contest: require('../../assets/images/photo-contest.jpg'),
+  breed_guess: require('../../assets/images/guess-breed.jpg'),
 };
 
 export default function GamesScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
   const { leaderboard, fetchLeaderboard, challenges, fetchChallenges } = useGameStore();
   const { totalPoints, fetchPoints } = usePointsStore();
+
+  const gameCardWidth = (width - (spacing.md * 2) - spacing.sm) / 2;
 
   useEffect(() => {
     fetchLeaderboard();
@@ -68,12 +74,14 @@ export default function GamesScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <GradientBackground>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <View>
             <View style={styles.headerTitleRow}>
+              <WiggleSticker iconName="sparkles" size={24} iconSize={12} backgroundColor={colors.brand.secondary} />
               <Ionicons name="game-controller-outline" size={20} color={colors.text.primary} />
               <ThemedText variant="title" style={styles.greeting}>Game Zone</ThemedText>
             </View>
@@ -84,7 +92,7 @@ export default function GamesScreen() {
 
         {/* Streak Widget */}
         {totalChallenges > 0 && (
-          <TouchableScale onPress={() => router.push('/training')}>
+          <TouchableOpacity onPress={() => router.push('/daily-streak')} activeOpacity={0.9}>
             <Card style={styles.streakCard}>
               <View>
                 <View style={styles.streakTitleRow}>
@@ -94,6 +102,7 @@ export default function GamesScreen() {
                 <ThemedText variant="body" style={styles.streakSub}>
                   {streakCount}/{totalChallenges} challenges done today
                 </ThemedText>
+                <ThemedText style={styles.streakResetNote}>Resets every 24 hours</ThemedText>
               </View>
               <View style={styles.streakBars}>
                 {challenges.map((c) => (
@@ -104,7 +113,7 @@ export default function GamesScreen() {
                 ))}
               </View>
             </Card>
-          </TouchableScale>
+          </TouchableOpacity>
         )}
 
         {/* Game Cards */}
@@ -115,13 +124,14 @@ export default function GamesScreen() {
           ) : (
             <View style={styles.bentoGrid}>
               {GAMES.map((mode) => (
-                <GameCard
-                  key={mode}
-                  mode={mode}
-                  onPress={() => handleGamePress(mode)}
-                  size="square"
-                  imageSource={GAME_IMAGES[mode]}
-                />
+                <View key={mode} style={[styles.gridItem, { width: gameCardWidth }]}> 
+                  <GameCard
+                    mode={mode}
+                    onPress={() => handleGamePress(mode)}
+                    size="square"
+                    imageSource={GAME_IMAGES[mode]}
+                  />
+                </View>
               ))}
             </View>
           )}
@@ -144,13 +154,14 @@ export default function GamesScreen() {
             </View>
             <Card style={styles.leaderboard}>
               {leaderboard.slice(0, 5).map((entry, index) => (
-                <TouchableScale
+                <TouchableOpacity
                   key={entry.user_id}
                   style={[
                     styles.leaderEntry,
                     entry.user_id === user?.id && styles.myEntry,
                   ]}
                   onPress={() => router.push(`/user/${entry.user_id}`)}
+                  activeOpacity={0.9}
                 >
                   <View style={styles.rank}>{renderRank(index, entry.rank)}</View>
                   <Avatar uri={entry.avatar_url} seed={entry.user_id} size={36} />
@@ -159,7 +170,7 @@ export default function GamesScreen() {
                     <ThemedText variant="caption" style={styles.entryUsername}>@{entry.username}</ThemedText>
                   </View>
                   <PointsBadge points={entry.points} size="sm" />
-                </TouchableScale>
+                </TouchableOpacity>
               ))}
             </Card>
           </View>
@@ -167,12 +178,13 @@ export default function GamesScreen() {
 
         <View style={styles.bottomPad} />
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.bg.app },
+  safeArea: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -180,7 +192,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     backgroundColor: colors.bg.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: colors.border.soft,
   },
   greeting: { color: colors.text.primary },
@@ -204,6 +216,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   streakSub: { color: 'rgba(255,255,255,0.9)' },
+  streakResetNote: {
+    marginTop: 2,
+    fontSize: typography.size.xs,
+    color: 'rgba(255,255,255,0.78)',
+  },
   streakBars: { flexDirection: 'row', gap: spacing.xs },
   streakBar: {
     flex: 1,
@@ -222,7 +239,10 @@ const styles = StyleSheet.create({
   bentoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  gridItem: {
+    marginBottom: spacing.sm,
   },
   sectionRow: {
     flexDirection: 'row',

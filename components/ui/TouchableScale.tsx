@@ -37,8 +37,13 @@ export function TouchableScale({
   };
 
   return (
-    <Animated.View style={[{ transform: [{ scale }] }, style]}>
-      <TouchableOpacity {...rest} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        {...rest}
+        style={style}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
         {children}
       </TouchableOpacity>
     </Animated.View>

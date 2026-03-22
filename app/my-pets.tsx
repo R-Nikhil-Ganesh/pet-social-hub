@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -41,18 +42,25 @@ export default function MyPetsScreen() {
               onPress={() => router.push({ pathname: '/pet/[id]', params: { id: String(pet.id) } } as never)}
             >
               <Card style={styles.card}>
-                {pet.photo_url ? (
-                  <Image source={{ uri: pet.photo_url }} style={styles.photo} />
-                ) : (
-                  <View style={[styles.photo, styles.photoFallback]}>
-                    <Ionicons name="paw" size={24} color={colors.brand.primary} />
+                <LinearGradient
+                  colors={['#FFF4EA', '#FFECDD']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.cardInner}
+                >
+                  {pet.photo_url ? (
+                    <Image source={{ uri: pet.photo_url }} style={styles.photo} />
+                  ) : (
+                    <View style={[styles.photo, styles.photoFallback]}>
+                      <Ionicons name="paw" size={24} color={colors.brand.primary} />
+                    </View>
+                  )}
+                  <View style={styles.meta}>
+                    <ThemedText variant="label" style={styles.name}>{pet.name}</ThemedText>
+                    <ThemedText variant="caption" style={styles.detail}>{pet.breed}</ThemedText>
+                    <ThemedText variant="caption" style={styles.detail}>{pet.age} years old • {pet.species}</ThemedText>
                   </View>
-                )}
-                <View style={styles.meta}>
-                  <ThemedText variant="label" style={styles.name}>{pet.name}</ThemedText>
-                  <ThemedText variant="caption" style={styles.detail}>{pet.breed}</ThemedText>
-                  <ThemedText variant="caption" style={styles.detail}>{pet.age} years old • {pet.species}</ThemedText>
-                </View>
+                </LinearGradient>
               </Card>
             </TouchableOpacity>
           ))}
@@ -89,13 +97,25 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   list: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg, gap: spacing.sm },
-  cardWrap: { borderRadius: radius.md },
+  cardWrap: {
+    borderRadius: radius.md,
+    shadowColor: '#B57E5E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
   card: {
+    borderRadius: radius.md,
+    borderColor: '#F1B3C9',
+    borderWidth: 1,
+  },
+  cardInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    borderRadius: radius.md,
     padding: spacing.sm,
+    borderRadius: radius.md,
   },
   photo: { width: 64, height: 64, borderRadius: 14 },
   photoFallback: {

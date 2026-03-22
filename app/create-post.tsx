@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Image,
   ActivityIndicator,
   Alert,
@@ -14,10 +13,12 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuthStore } from '@/store/authStore';
 import { useFeedStore } from '@/store/feedStore';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function CreatePostScreen() {
   const router = useRouter();
@@ -115,7 +116,7 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} keyboardShouldPersistTaps="handled">
           {/* Author */}
           <View style={styles.authorRow}>
             <Avatar uri={user?.avatar_url ?? ''} seed={user?.id ?? 'me'} size={42} isProfessional={user?.is_professional ?? false} />
@@ -198,45 +199,48 @@ export default function CreatePostScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: { flex: 1, backgroundColor: colors.bg.app },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
+    borderBottomColor: colors.border.soft,
+    backgroundColor: colors.bg.surface,
   },
-  cancel: { fontSize: 16, color: '#71717A' },
-  title: { fontSize: 17, fontWeight: '700', color: '#18181B' },
+  cancel: { fontSize: typography.size.md, color: colors.text.secondary },
+  title: { fontSize: typography.size.lg, fontWeight: typography.weight.bold, color: colors.text.primary },
   postBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    backgroundColor: colors.brand.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     minWidth: 64,
     alignItems: 'center',
   },
   postBtnDisabled: { opacity: 0.5 },
-  postBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  body: { flex: 1, padding: 16 },
-  authorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  displayName: { fontSize: 15, fontWeight: '700', color: '#18181B' },
-  username: { fontSize: 12, color: '#71717A' },
+  postBtnText: { color: colors.text.inverse, fontWeight: typography.weight.bold, fontSize: typography.size.sm },
+  body: { flex: 1, paddingHorizontal: spacing.md },
+  bodyContent: { paddingTop: spacing.md, paddingBottom: spacing.xxl },
+  authorRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm },
+  displayName: { fontSize: typography.size.md, fontWeight: typography.weight.bold, color: colors.text.primary },
+  username: { fontSize: typography.size.xs, color: colors.text.secondary },
   captionInput: {
-    fontSize: 17,
-    color: '#18181B',
+    fontSize: typography.size.lg,
+    color: colors.text.primary,
     minHeight: 90,
     textAlignVertical: 'top',
-    marginBottom: 18,
+    marginBottom: spacing.md,
+    lineHeight: typography.lineHeight.relaxed,
   },
-  previewWrapper: { borderRadius: 16, overflow: 'hidden', marginBottom: 18, position: 'relative' },
+  previewWrapper: { borderRadius: radius.lg, overflow: 'hidden', marginBottom: spacing.md, position: 'relative' },
   preview: { width: '100%', height: 260 },
   removeMedia: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: spacing.xs,
+    right: spacing.xs,
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 30,
     width: 32,
@@ -244,49 +248,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removeMediaText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  removeMediaText: { color: colors.text.inverse, fontSize: typography.size.md, fontWeight: typography.weight.bold },
   mediaPicker: {
     height: 140,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E4E4E7',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.soft,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginBottom: 18,
+    gap: spacing.xxs,
+    marginBottom: spacing.md,
+    backgroundColor: colors.bg.surface,
   },
-  mediaPickerIcon: { fontSize: 32 },
-  mediaPickerText: { fontSize: 14, color: '#71717A' },
-  field: { marginBottom: 18 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#3F3F46', marginBottom: 8 },
+  mediaPickerIcon: { fontSize: 32, color: colors.brand.primary },
+  mediaPickerText: { fontSize: typography.size.sm, color: colors.text.secondary },
+  field: { marginBottom: spacing.md },
+  fieldLabel: { fontSize: 13, fontWeight: typography.weight.semibold, color: colors.text.primary, marginBottom: spacing.xs },
   fieldInput: {
-    borderWidth: 1.5,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.border.soft,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 11,
-    fontSize: 15,
-    color: '#18181B',
+    fontSize: typography.size.md,
+    color: colors.text.primary,
+    backgroundColor: colors.bg.surface,
   },
-  petRow: { gap: 8 },
+  petRow: { gap: spacing.xs },
   petChip: {
-    borderWidth: 1.5,
-    borderColor: '#DDD6FE',
+    borderWidth: 1,
+    borderColor: colors.border.strong,
     borderRadius: 30,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 7,
+    backgroundColor: colors.bg.surface,
   },
-  petChipSelected: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
-  petChipText: { fontSize: 13, color: '#7C3AED', fontWeight: '600' },
-  petChipTextSelected: { color: '#fff' },
+  petChipSelected: { backgroundColor: colors.brand.primary, borderColor: colors.brand.primary },
+  petChipText: { fontSize: 13, color: colors.text.secondary, fontWeight: typography.weight.semibold },
+  petChipTextSelected: { color: colors.text.inverse },
   noPetsCta: {
     alignSelf: 'flex-start',
-    borderRadius: 10,
-    backgroundColor: '#EDE9FE',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 18,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bg.subtle,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.md,
   },
-  noPetsCtaText: { fontSize: 12, fontWeight: '600', color: '#6D28D9' },
+  noPetsCtaText: { fontSize: typography.size.xs, fontWeight: typography.weight.semibold, color: colors.brand.primaryDark },
 });

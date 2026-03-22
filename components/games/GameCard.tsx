@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Animated, View, StyleSheet, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,37 +16,41 @@ interface GameCardProps {
 
 const GAME_META: Record<
   GameMode,
-  { title: string; description: string; icon: keyof typeof Ionicons.glyphMap; gradient: [string, string] }
+  { title: string; icon: keyof typeof Ionicons.glyphMap; gradient: [string, string] }
 > = {
   trivia: {
     title: 'Trivia Battle',
-    description: '1v1 pet quiz showdown',
     icon: 'help-circle-outline',
     gradient: ['#7C3AED', '#5B21B6'],
   },
   photo_contest: {
     title: 'Photo Contest',
-    description: 'Vote for the cutest pet',
     icon: 'camera-outline',
     gradient: ['#EC4899', '#9D174D'],
   },
   training: {
     title: 'Training Challenges',
-    description: 'Daily streaks & rewards',
     icon: 'trophy-outline',
     gradient: ['#F59E0B', '#B45309'],
   },
   breed_guess: {
     title: 'Breed Guesser',
-    description: 'Guess the breed, win points',
     icon: 'search-outline',
     gradient: ['#10B981', '#065F46'],
   },
 };
 
+const IMAGE_ZOOM_BY_MODE: Partial<Record<GameMode, number>> = {
+  photo_contest: 0.98,
+  breed_guess: 0.98,
+};
+
 export function GameCard({ mode, onPress, disabled, size = 'square', imageSource }: GameCardProps) {
   const meta = GAME_META[mode];
   const cardScale = useRef(new Animated.Value(1)).current;
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(imageSource) && !imageFailed;
+  const imageZoom = IMAGE_ZOOM_BY_MODE[mode] ?? 1.14;
 
   const onCardPressIn = () => {
     Animated.spring(cardScale, {
@@ -67,7 +71,14 @@ export function GameCard({ mode, onPress, disabled, size = 'square', imageSource
   };
 
   return (
-    <Animated.View style={[styles.card, size === 'wide' ? styles.cardWide : styles.cardSquare, disabled && styles.disabled, { transform: [{ scale: cardScale }] }]}>
+    <Animated.View
+      style={[
+        styles.card,
+        size === 'wide' ? styles.cardWide : styles.cardSquare,
+        disabled && styles.disabled,
+        { transform: [{ scale: cardScale }] },
+      ]}
+    >
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.88}
@@ -83,24 +94,33 @@ export function GameCard({ mode, onPress, disabled, size = 'square', imageSource
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.glossOverlay}
-          />
-          {imageSource ? (
-            <View style={styles.imageWrap}>
-              <Image source={imageSource} style={styles.image} resizeMode="cover" />
+          <View style={styles.mediaArea}>
+          {showImage ? (
+            <View style={styles.imagePlate}>
+              <Image
+                source={imageSource}
+                style={[styles.featuredImage, { transform: [{ scale: imageZoom }] }]}
+                resizeMode="cover"
+                onError={() => setImageFailed(true)}
+              />
             </View>
           ) : (
-            <Ionicons name={meta.icon} size={34} color="#fff" style={styles.icon} />
+            <View style={styles.iconWrap}>
+              <Ionicons name={meta.icon} size={40} color="#fff" style={styles.icon} />
+            </View>
           )}
+          </View>
+
+          <LinearGradient
+            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.62)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.imageOverlay}
+          />
+
           <View style={styles.textGroup}>
             <ThemedText style={styles.title}>{meta.title}</ThemedText>
-            <ThemedText style={styles.description}>{meta.description}</ThemedText>
           </View>
-          <ThemedText style={styles.arrow}>›</ThemedText>
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -111,7 +131,6 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.lg,
     overflow: 'hidden',
-    marginBottom: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -122,60 +141,61 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cardSquare: {
-    width: '48.5%',
+    width: '100%',
   },
   gradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
     position: 'relative',
-    padding: spacing.lg,
-    gap: spacing.sm,
+    padding: spacing.sm,
   },
   gradientWide: {
-    minHeight: 128,
+    minHeight: 170,
   },
   gradientSquare: {
-    minHeight: 118,
-    padding: spacing.md,
+    minHeight: 162,
   },
-  glossOverlay: {
+  imageOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  icon: {
-    width: 38,
-    textAlign: 'center',
+  mediaArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: spacing.xs,
   },
-  imageWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    overflow: 'hidden',
+  imagePlate: {
+    width: '92%',
+    height: '76%',
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.32)',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  image: {
+  featuredImage: {
     width: '100%',
     height: '100%',
   },
-  textGroup: {
+  iconWrap: {
     flex: 1,
-    gap: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    textAlign: 'center',
+  },
+  textGroup: {
+    width: '100%',
+    paddingHorizontal: 2,
+    paddingBottom: 2,
   },
   title: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     fontWeight: typography.weight.extrabold,
     color: '#fff',
-  },
-  description: {
-    fontSize: typography.size.sm,
-    color: 'rgba(255,255,255,0.8)',
     lineHeight: 20,
-  },
-  arrow: {
-    fontSize: 28,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '300',
   },
   disabled: {
     opacity: 0.6,

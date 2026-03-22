@@ -13,6 +13,12 @@ export interface Community {
   is_member: boolean;
   is_default: boolean;
   unread_count?: number;
+  members_preview?: {
+    id: number;
+    avatar_url?: string;
+    username?: string;
+    display_name?: string;
+  }[];
 }
 
 export interface Thread {

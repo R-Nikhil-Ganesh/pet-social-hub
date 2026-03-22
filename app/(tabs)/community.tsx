@@ -6,16 +6,19 @@ import {
   TextInput,
   RefreshControl,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
+import { GradientBackground } from '@/components/ui/GradientBackground';
 import { CommunityCard } from '@/components/community/CommunityCard';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
 import { TouchableScale } from '@/components/ui/TouchableScale';
+import { WiggleSticker } from '@/components/ui/WiggleSticker';
 import { useCommunityStore } from '@/store/communityStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -58,10 +61,12 @@ export default function CommunityScreen() {
   });
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <GradientBackground>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
+          <WiggleSticker iconName="sparkles" size={24} iconSize={12} backgroundColor={colors.brand.secondary} />
           <Ionicons name="people-outline" size={20} color={colors.text.primary} />
           <ThemedText variant="title" style={styles.title}>Communities</ThemedText>
         </View>
@@ -94,16 +99,17 @@ export default function CommunityScreen() {
       {/* Tabs */}
       <View style={styles.tabRow}>
         {(['my', 'discover'] as Tab[]).map((tab) => (
-          <TouchableScale
+          <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
+            activeOpacity={0.88}
             accessibilityRole="button"
           >
             <ThemedText style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
               {tab === 'my' ? 'My Communities' : 'Discover'}
             </ThemedText>
-          </TouchableScale>
+          </TouchableOpacity>
         ))}
       </View>
 
@@ -148,12 +154,13 @@ export default function CommunityScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.bg.app },
+  safeArea: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -161,7 +168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.bg.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: colors.border.soft,
   },
   title: { color: colors.text.primary },

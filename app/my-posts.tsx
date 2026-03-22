@@ -62,7 +62,7 @@ export default function MyPostsScreen() {
             <Button
               style={styles.createBtn}
               label="Create Post"
-              onPress={() => router.push('/create-post')}
+              onPress={() => router.push('/new-post' as never)}
               accessibilityLabel="Create a new post"
             />
           </Card>

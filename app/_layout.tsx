@@ -26,7 +26,7 @@ export default function RootLayout() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFE8F8' }}>
         <SkeletonShimmer width={140} height={14} borderRadius={999} />
       </View>
     );
@@ -34,20 +34,20 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="dark" translucent={false} backgroundColor="#ffffff" />
+      <StatusBar style="dark" translucent={false} backgroundColor="#FFE8F8" />
       <Stack
         screenOptions={{
           headerShown: true,
           headerStyle: {
-            backgroundColor: '#ffffff',
+            backgroundColor: '#FFE8F8',
           },
-          headerTintColor: '#18181B',
+          headerTintColor: '#4A124F',
           headerTitleStyle: {
             fontWeight: '700',
             fontSize: 17,
-            color: '#18181B',
+            color: '#4A124F',
           },
-          headerShadowVisible: false,
+          headerShadowVisible: true,
         }}
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -66,6 +66,7 @@ export default function RootLayout() {
         <Stack.Screen name="followers/[id]" options={{ headerShown: true, title: 'Followers' }} />
         <Stack.Screen name="following/[id]" options={{ headerShown: true, title: 'Following' }} />
         <Stack.Screen name="training" options={{ headerShown: true, title: 'Training' }} />
+        <Stack.Screen name="daily-streak" options={{ headerShown: true, title: 'Daily Streak' }} />
         <Stack.Screen name="photo-contest" options={{ headerShown: true, title: 'Photo Contest' }} />
         <Stack.Screen name="breed-guess" options={{ headerShown: true, title: 'Breed Guess' }} />
         <Stack.Screen name="story/[id]" options={{ presentation: 'fullScreenModal', headerShown: false }} />

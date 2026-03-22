@@ -2,10 +2,10 @@ import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   Animated,
   View,
-  FlatList,
   StyleSheet,
   RefreshControl,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { ThemedText } from '@/components/ThemedText';
 import { AnimatedEntrance } from '@/components/ui/AnimatedEntrance';
+import { GradientBackground } from '@/components/ui/GradientBackground';
 import { PostCard } from '@/components/feed/PostCard';
 import { StoryRow } from '@/components/feed/StoryRow';
 import { EventGroupsBoard } from '@/components/feed/EventGroupsBoard';
@@ -20,6 +21,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
 import { TouchableScale } from '@/components/ui/TouchableScale';
+import { WiggleSticker } from '@/components/ui/WiggleSticker';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { getSocket } from '@/services/socket';
 import { useFeedStore } from '@/store/feedStore';
@@ -59,9 +61,11 @@ export default function FeedScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [tabBarWidth, setTabBarWidth] = useState(0);
+  const [collapsibleHeaderHeight, setCollapsibleHeaderHeight] = useState(0);
   const tabContentOpacity = useRef(new Animated.Value(1)).current;
   const tabContentTranslateX = useRef(new Animated.Value(0)).current;
   const tabIndicatorIndex = useRef(new Animated.Value(0)).current;
+  const feedScrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchFeed(true);
@@ -150,7 +154,7 @@ export default function FeedScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
-    router.push('/create-post');
+    router.push('/new-post' as never);
   };
 
   const tabGap = spacing.xs;
@@ -161,14 +165,38 @@ export default function FeedScreen() {
     outputRange: [0, indicatorWidth + tabGap],
   });
 
-  const renderHeader = () => (
+  const collapseDistance = Math.max(collapsibleHeaderHeight, 1);
+  const collapsibleTranslateY = feedScrollY.interpolate({
+    inputRange: [0, collapseDistance],
+    outputRange: [0, -collapseDistance],
+    extrapolate: 'clamp',
+  });
+  const collapsibleOpacity = feedScrollY.interpolate({
+    inputRange: [0, collapseDistance * 0.55, collapseDistance],
+    outputRange: [1, 0.25, 0],
+    extrapolate: 'clamp',
+  });
+  const collapsibleScale = feedScrollY.interpolate({
+    inputRange: [0, collapseDistance],
+    outputRange: [1, 0.98],
+    extrapolate: 'clamp',
+  });
+
+  const handleFeedScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: feedScrollY } } }],
+    { useNativeDriver: true }
+  );
+
+  const renderTopBar = () => (
     <View>
       {/* Top Bar */}
       <AnimatedEntrance delay={20}>
         <View style={styles.topBar}>
           <View style={styles.brandRow}>
+            <WiggleSticker iconName="sparkles" size={24} iconSize={12} backgroundColor={colors.brand.secondary} />
             <Ionicons name="paw" size={20} color={colors.brand.primary} />
             <ThemedText style={styles.appTitle}>Pawprint</ThemedText>
+            <WiggleSticker iconName="happy" size={24} iconSize={12} backgroundColor={colors.brand.accent} iconColor={colors.text.primary} />
           </View>
           <View style={styles.topRight}>
             <TouchableScale
@@ -198,45 +226,64 @@ export default function FeedScreen() {
           </View>
         </View>
       </AnimatedEntrance>
-
-      {/* Story Row */}
-      <AnimatedEntrance delay={90}>
-        <StoryRow />
-      </AnimatedEntrance>
-
-      {/* Feed Tabs */}
-      <AnimatedEntrance delay={140}>
-        <View style={styles.tabBar} onLayout={(e) => setTabBarWidth(e.nativeEvent.layout.width)}>
-          {indicatorWidth > 0 && (
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                styles.tabIndicator,
-                {
-                  width: indicatorWidth,
-                  transform: [{ translateX: indicatorTranslateX }],
-                },
-              ]}
-            />
-          )}
-          {TABS.map((tab) => (
-            <TouchableScale
-              key={tab.key}
-              onPress={() => handleTabPress(tab.key)}
-              style={styles.tab}
-              accessibilityRole="button"
-              accessibilityLabel={`Show ${tab.key} tab`}
-              accessibilityState={{ selected: activeTab === tab.key }}
-            >
-              <ThemedText style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-                {tab.label}
-              </ThemedText>
-            </TouchableScale>
-          ))}
-        </View>
-      </AnimatedEntrance>
-
     </View>
+  );
+
+  const renderCollapsibleHeader = () => (
+    <Animated.View
+      style={[
+        styles.collapsibleHeader,
+        {
+          opacity: collapsibleOpacity,
+          transform: [{ translateY: collapsibleTranslateY }, { scale: collapsibleScale }],
+        },
+      ]}
+    >
+      <View
+        onLayout={(e) => {
+          const measured = Math.round(e.nativeEvent.layout.height);
+          if (measured > 0 && measured !== collapsibleHeaderHeight) {
+            setCollapsibleHeaderHeight(measured);
+          }
+        }}
+      >
+        <AnimatedEntrance delay={90}>
+          <StoryRow />
+        </AnimatedEntrance>
+
+        <AnimatedEntrance delay={140}>
+          <View style={styles.tabBar} onLayout={(e) => setTabBarWidth(e.nativeEvent.layout.width)}>
+            {indicatorWidth > 0 && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.tabIndicator,
+                  {
+                    width: indicatorWidth,
+                    transform: [{ translateX: indicatorTranslateX }],
+                  },
+                ]}
+              />
+            )}
+            {TABS.map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => handleTabPress(tab.key)}
+                style={styles.tab}
+                activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel={`Show ${tab.key} tab`}
+                accessibilityState={{ selected: activeTab === tab.key }}
+              >
+                <ThemedText style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+                  {tab.label}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </AnimatedEntrance>
+      </View>
+    </Animated.View>
   );
 
   const renderFooter = () =>
@@ -259,26 +306,34 @@ export default function FeedScreen() {
     ) : null;
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
-      {renderHeader()}
+    <GradientBackground>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      {renderTopBar()}
 
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: tabContentOpacity,
-          transform: [{ translateX: tabContentTranslateX }],
-        }}
-      >
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: tabContentOpacity,
+            transform: [{ translateX: tabContentTranslateX }],
+          }}
+        >
+        <View style={styles.feedBody}>
+        {renderCollapsibleHeader()}
         {activeTab === 'moments' ? (
-          <FlatList
+          <Animated.FlatList
             data={posts}
             keyExtractor={(item) => `post-${item.id}`}
             renderItem={({ item }) => <PostCard post={item} />}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingTop: collapsibleHeaderHeight + spacing.xs },
+            ]}
             ListFooterComponent={renderFooter}
             ListEmptyComponent={renderEmpty}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
+            onScroll={handleFeedScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -289,7 +344,7 @@ export default function FeedScreen() {
             showsVerticalScrollIndicator={false}
           />
         ) : (
-          <FlatList
+          <Animated.FlatList
             data={[{ id: 'events-board' }]}
             keyExtractor={(item) => item.id}
             renderItem={() => (
@@ -298,22 +353,40 @@ export default function FeedScreen() {
                 connections={connections}
               />
             )}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingTop: collapsibleHeaderHeight + spacing.xs },
+            ]}
+            onScroll={handleFeedScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand.primary} />
             }
             showsVerticalScrollIndicator={false}
           />
         )}
+        </View>
       </Animated.View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.bg.app,
+    backgroundColor: 'transparent',
+  },
+  feedBody: {
+    flex: 1,
+    position: 'relative',
+  },
+  collapsibleHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 3,
   },
   listContent: {
     paddingBottom: spacing.lg,

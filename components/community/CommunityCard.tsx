@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Facepile } from '@/components/ui/Facepile';
+import { Avatar } from '@/components/ui/Avatar';
 import { Community } from '@/store/communityStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -25,7 +25,9 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
   }, [name]);
   const canShowImage = Boolean(community.icon_url) && !imageFailed;
   const memberCount = Number(community.member_count ?? 0);
-  const visibleMemberAvatars = Math.min(3, Math.max(0, memberCount));
+  const memberPreview = Array.isArray(community.members_preview)
+    ? community.members_preview.slice(0, 3)
+    : [];
   const unreadCount = Number(community.unread_count ?? 0);
   const communityId = Number(community?.id);
 
@@ -66,7 +68,24 @@ export function CommunityCard({ community, onJoin }: CommunityCardProps) {
             {description}
           </ThemedText>
           <View style={styles.stats}>
-            <Facepile seed={communityId} size={24} count={visibleMemberAvatars} />
+            {memberPreview.length > 0 ? (
+              <View style={styles.memberPile}>
+                {memberPreview.map((member, index) => (
+                  <View
+                    key={`community-member-${communityId}-${member.id}`}
+                    style={[
+                      styles.memberAvatarWrap,
+                      {
+                        marginLeft: index === 0 ? 0 : -8,
+                        zIndex: memberPreview.length - index,
+                      },
+                    ]}
+                  >
+                    <Avatar uri={member.avatar_url} seed={member.id} size={24} />
+                  </View>
+                ))}
+              </View>
+            ) : null}
             <ThemedText style={styles.stat}>{memberCount.toLocaleString()} members</ThemedText>
             {unreadCount > 0 ? (
               <View style={styles.unreadBadge}>
@@ -153,6 +172,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     marginTop: 2,
+  },
+  memberPile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 2,
+  },
+  memberAvatarWrap: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
   },
   stat: {
     fontSize: 11,

@@ -1,30 +1,30 @@
 export const colors = {
   bg: {
-    app: '#FFFDF9',
-    surface: '#FFFFFF',
-    subtle: '#FFF1E6',
-    muted: '#F5F5F7',
+    app: '#FFF2FB',
+    surface: '#FFE8F8',
+    subtle: '#FFD6F1',
+    muted: '#F8DAFF',
   },
   text: {
-    primary: '#1E1C2A',
-    secondary: '#5D5A71',
-    muted: '#8B89A0',
+    primary: '#421245',
+    secondary: '#6D2D7A',
+    muted: '#9A64A3',
     inverse: '#FFFFFF',
   },
   brand: {
-    primary: '#F97316',
-    primaryDark: '#EA580C',
-    secondary: '#0EA5A5',
-    accent: '#E11D48',
+    primary: '#FF4FA3',
+    primaryDark: '#E63A92',
+    secondary: '#22D3EE',
+    accent: '#FFCF5A',
   },
   border: {
-    soft: 'rgba(0,0,0,0.04)',
-    strong: '#D8D3E1',
+    soft: 'rgba(194,83,255,0.16)',
+    strong: '#DE9DF0',
   },
   state: {
-    success: '#16A34A',
+    success: '#10B981',
     warning: '#F59E0B',
-    danger: '#DC2626',
+    danger: '#F43F5E',
   },
 };
 
@@ -75,9 +75,9 @@ export const typography = {
 
 export const shadows = {
   card: {
-    shadowColor: '#121021',
+    shadowColor: '#A3197D',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
   },
