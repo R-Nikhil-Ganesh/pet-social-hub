@@ -30,6 +30,8 @@ export default function RegisterScreen() {
     confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorText, setErrorText] = useState('');
 
   const updateField = (field: string, value: string) =>
@@ -125,20 +127,49 @@ export default function RegisterScreen() {
             <Card style={styles.form}>
               <ThemedText variant="title" style={styles.heading}>Create account</ThemedText>
 
-              {fields.map(({ key, label, placeholder, secure, keyboard, autoCapitalize }) => (
-                <Input
-                  key={key}
-                  label={label}
-                  value={form[key]}
-                  onChangeText={(val) => updateField(key, val)}
-                  placeholder={placeholder}
-                  secureTextEntry={secure}
-                  keyboardType={keyboard ?? 'default'}
-                  autoCapitalize={autoCapitalize ?? 'none'}
-                  returnKeyType="next"
-                  textContentType={key === 'email' ? 'emailAddress' : key.includes('password') ? 'password' : 'none'}
-                />
-              ))}
+              {fields.map(({ key, label, placeholder, secure, keyboard, autoCapitalize }) => {
+                const isPasswordField = key === 'password';
+                const isConfirmPasswordField = key === 'confirmPassword';
+                const shouldShowToggle = isPasswordField || isConfirmPasswordField;
+                const secureTextEntry =
+                  isPasswordField
+                    ? !showPassword
+                    : isConfirmPasswordField
+                      ? !showConfirmPassword
+                      : secure;
+
+                return (
+                  <View key={key}>
+                    <Input
+                      label={label}
+                      value={form[key]}
+                      onChangeText={(val) => updateField(key, val)}
+                      placeholder={placeholder}
+                      secureTextEntry={secureTextEntry}
+                      keyboardType={keyboard ?? 'default'}
+                      autoCapitalize={autoCapitalize ?? 'none'}
+                      returnKeyType="next"
+                      textContentType={key === 'email' ? 'emailAddress' : key.includes('password') ? 'password' : 'none'}
+                    />
+                    {shouldShowToggle ? (
+                      <TouchableOpacity
+                        style={styles.passwordToggle}
+                        onPress={() => {
+                          if (isPasswordField) {
+                            setShowPassword((prev) => !prev);
+                            return;
+                          }
+                          setShowConfirmPassword((prev) => !prev);
+                        }}
+                      >
+                        <ThemedText variant="label" style={styles.passwordToggleText}>
+                          {(isPasswordField ? showPassword : showConfirmPassword) ? 'Hide password' : 'See password'}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                );
+              })}
 
               <Button
                 label="Create Account"
@@ -179,6 +210,18 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   heading: { marginBottom: spacing.xs },
+  passwordToggle: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+    marginBottom: spacing.xs,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  passwordToggleText: {
+    color: colors.brand.primary,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
+  },
   errorText: { color: colors.state.danger },
   secondaryBtn: { alignItems: 'center', paddingVertical: spacing.xxs, minHeight: 44, justifyContent: 'center' },
   secondaryText: { fontSize: typography.size.sm, color: colors.text.secondary },

@@ -20,7 +20,8 @@
       },
       "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.cloudyrelic.pets"
     },
     "web": {
       "output": "single-page-app",
@@ -44,6 +45,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "310ef033-69b8-4544-ad13-4e81a736354d"
+      }
     }
   }
 }

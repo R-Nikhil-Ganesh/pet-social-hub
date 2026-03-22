@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const login = useAuthStore((s) => s.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState('');
 
@@ -102,11 +103,20 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="••••••••"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 returnKeyType="done"
                 onSubmitEditing={handleLogin}
                 textContentType="password"
               />
+
+              <TouchableOpacity
+                style={styles.passwordToggle}
+                onPress={() => setShowPassword((prev) => !prev)}
+              >
+                <ThemedText variant="label" style={styles.passwordToggleText}>
+                  {showPassword ? 'Hide password' : 'See password'}
+                </ThemedText>
+              </TouchableOpacity>
 
               <Button
                 label="Sign In"
@@ -162,6 +172,18 @@ const styles = StyleSheet.create({
   },
   heading: {
     marginBottom: spacing.xs,
+  },
+  passwordToggle: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+    marginBottom: spacing.xs,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  passwordToggleText: {
+    color: colors.brand.primary,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
   },
   errorText: {
     color: colors.state.danger,

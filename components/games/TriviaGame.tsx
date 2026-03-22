@@ -10,8 +10,10 @@ import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
+import { Card } from '@/components/ui/Card';
 import { GameSession, TriviaQuestion } from '@/store/gameStore';
 import { useAuthStore } from '@/store/authStore';
+import { spacing } from '@/theme/tokens';
 
 interface TriviaGameProps {
   session: GameSession;
@@ -64,12 +66,14 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
 
   if (session.status === 'waiting') {
     return (
-      <View style={styles.waitingContainer}>
-        <SkeletonShimmer width={132} height={12} borderRadius={999} />
-        <ThemedText style={styles.waitingText}>Finding opponent…</ThemedText>
-        <TouchableOpacity style={styles.leaveBtn} onPress={onLeave}>
-          <ThemedText style={styles.leaveBtnText}>Leave Queue</ThemedText>
-        </TouchableOpacity>
+      <View style={styles.waitingScreen}>
+        <Card style={styles.waitingCard}>
+          <SkeletonShimmer width={132} height={12} borderRadius={999} />
+          <ThemedText style={styles.waitingText}>Finding opponent…</ThemedText>
+          <TouchableOpacity style={styles.leaveBtn} onPress={onLeave}>
+            <ThemedText style={styles.leaveBtnText}>Leave Queue</ThemedText>
+          </TouchableOpacity>
+        </Card>
       </View>
     );
   }
@@ -196,6 +200,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,
+  },
+  waitingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  waitingCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
+    gap: spacing.md,
   },
   waitingText: {
     fontSize: 18,
