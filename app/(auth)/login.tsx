@@ -17,7 +17,53 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/authStore';
+import { API_BASE_URL } from '@/services/api';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+
+const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL || '';
+
+const stringifyForDebug = (value: unknown) => {
+  if (value == null) return 'null';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const buildLoginDebugInfo = (err: any) => {
+  const baseUrl = err?.config?.baseURL || `${API_BASE_URL}/api`;
+  const path = err?.config?.url || '/auth/login';
+  const requestUrl = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+
+  return [
+    `__DEV__: ${String(__DEV__)}`,
+    `Platform: ${Platform.OS}`,
+    `EXPO_PUBLIC_API_URL: ${configuredApiUrl || '(empty)'}`,
+    `API_BASE_URL: ${API_BASE_URL}`,
+    `Request URL: ${requestUrl}`,
+    `HTTP Status: ${String(err?.response?.status ?? 'none')}`,
+    `Axios Code: ${String(err?.code ?? 'none')}`,
+    `Error Message: ${String(err?.message ?? 'none')}`,
+    `Response Data: ${stringifyForDebug(err?.response?.data)}`,
+  ].join('\n');
+};
+
+const testNetworkEndpoint = async (
+  url: string
+): Promise<{ ok: boolean; code: string; status?: number }> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(url, { method: 'GET', signal: controller.signal });
+    clearTimeout(timeoutId);
+    return { ok: true, code: 'OK', status: response.status };
+  } catch (err: any) {
+    return { ok: false, code: err?.code || err?.name || 'UNKNOWN', status: undefined };
+  }
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,9 +73,13 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState('');
+  const [debugText, setDebugText] = useState('');
+  const [networkTestResults, setNetworkTestResults] = useState('');
+  const [networkTestLoading, setNetworkTestLoading] = useState(false);
 
   const handleLogin = async () => {
     setErrorText('');
+    setDebugText('');
     if (!email.trim() || !password.trim()) {
       setErrorText('Please enter your email and password.');
       Alert.alert('Missing Fields', 'Please enter your email and password.');
@@ -50,6 +100,7 @@ export default function LoginScreen() {
           ? 'Cannot reach server. Set EXPO_PUBLIC_API_URL to your backend URL and make sure the server is running.'
           : 'Check your credentials and try again.');
       setErrorText(errorMessage);
+      setDebugText(buildLoginDebugInfo(err));
       Alert.alert(
         'Login Failed',
         errorMessage
@@ -57,6 +108,28 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNetworkTest = async () => {
+    setNetworkTestLoading(true);
+    setNetworkTestResults('Testing...');
+
+    const endpoints = [
+      { name: 'Google DNS', url: 'https://8.8.8.8' },
+      { name: 'Google', url: 'https://google.com' },
+      { name: 'Onrender.com', url: 'https://onrender.com' },
+      { name: 'Backend Health', url: `${API_BASE_URL}/health` },
+      { name: 'Backend Login', url: `${API_BASE_URL}/api/auth/login` },
+    ];
+
+    const results: string[] = [];
+    for (const endpoint of endpoints) {
+      const result = await testNetworkEndpoint(endpoint.url);
+      results.push(`${endpoint.name}: ${result.ok ? `✓ (HTTP ${result.status})` : `✗ (${result.code})`}`);
+    }
+
+    setNetworkTestResults(results.join('\n'));
+    setNetworkTestLoading(false);
   };
 
   return (
@@ -127,6 +200,29 @@ export default function LoginScreen() {
 
               {errorText ? <ThemedText variant="caption" style={styles.errorText}>{errorText}</ThemedText> : null}
 
+              {debugText ? (
+                <View style={styles.debugBox}>
+                  <ThemedText variant="label" style={styles.debugTitle}>Login Debug</ThemedText>
+                  <ThemedText variant="caption" style={styles.debugText} selectable>{debugText}</ThemedText>
+                  
+                  <TouchableOpacity
+                    style={styles.networkTestBtn}
+                    onPress={handleNetworkTest}
+                    disabled={networkTestLoading}
+                  >
+                    <ThemedText variant="label" style={styles.networkTestBtnText}>
+                      {networkTestLoading ? 'Testing Network...' : 'Test Network Connectivity'}
+                    </ThemedText>
+                  </TouchableOpacity>
+
+                  {networkTestResults ? (
+                    <View style={styles.networkTestResults}>
+                      <ThemedText variant="caption" style={styles.debugText} selectable>{networkTestResults}</ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+
               <TouchableOpacity
                 style={styles.secondaryBtn}
                 onPress={() => router.push('/(auth)/register')}
@@ -187,6 +283,44 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.state.danger,
+  },
+  debugBox: {
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    backgroundColor: '#FFF0FA',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  debugTitle: {
+    color: colors.text.primary,
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
+  },
+  debugText: {
+    color: colors.text.primary,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+  },
+  networkTestBtn: {
+    backgroundColor: colors.brand.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    minHeight: 36,
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
+  networkTestBtnText: {
+    color: colors.text.inverse,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
+  },
+  networkTestResults: {
+    backgroundColor: 'rgba(255, 79, 163, 0.05)',
+    borderRadius: radius.sm,
+    padding: spacing.xs,
+    marginTop: spacing.xs,
   },
   secondaryBtn: {
     alignItems: 'center',

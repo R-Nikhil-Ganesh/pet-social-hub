@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +20,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PetTag } from '@/components/ui/PetTag';
 import { PointsBadge } from '@/components/ui/PointsBadge';
 import { MenuPopover, MenuOption } from '@/components/ui/MenuPopover';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 import { useAuthStore } from '@/store/authStore';
 import { usePointsStore } from '@/store/pointsStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -31,6 +31,8 @@ export default function ProfileScreen() {
   const { totalPoints, fetchPoints } = usePointsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     fetchPoints();
@@ -43,21 +45,19 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await logout();
-            router.replace('/(auth)/login');
-          } catch {
-            Alert.alert('Error', 'Could not sign out. Please try again.');
-          }
-        },
-      },
-    ]);
+    setLogoutDialogVisible(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setLogoutLoading(true);
+    try {
+      await logout();
+      setLogoutDialogVisible(false);
+      router.replace('/(auth)/login');
+    } catch {
+      setLogoutLoading(false);
+      setLogoutDialogVisible(false);
+    }
   };
 
   const menuOptions: MenuOption[] = [
@@ -254,6 +254,18 @@ export default function ProfileScreen() {
         <View style={{ height: 20 }} />
       </ScrollView>
       </SafeAreaView>
+
+      <ConfirmationDialog
+        visible={logoutDialogVisible}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmLabel="Sign Out"
+        cancelLabel="Cancel"
+        destructive
+        loading={logoutLoading}
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setLogoutDialogVisible(false)}
+      />
     </GradientBackground>
   );
 }

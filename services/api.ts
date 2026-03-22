@@ -54,9 +54,16 @@ const getDevApiBaseUrl = () => {
   return 'http://localhost:3001';
 };
 
+const getProdApiBaseUrl = () => {
+  if (configuredApiUrl) return normalizeBaseUrl(configuredApiUrl);
+
+  // Keep a real hosted fallback for release binaries when env injection is missing.
+  return 'https://pets-hub-backend.onrender.com';
+};
+
 export const API_BASE_URL = __DEV__
   ? getDevApiBaseUrl()
-  : 'https://your-pawprint-api.com';
+  : getProdApiBaseUrl();
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,

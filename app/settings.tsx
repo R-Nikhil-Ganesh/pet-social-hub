@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 import { useAuthStore } from '@/store/authStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -24,19 +24,23 @@ export default function SettingsScreen() {
   const [notifFollows, setNotifFollows] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifGames, setNotifGames] = useState(true);
+  const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
-  const handleLogout = () => {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+  const handleLogoutPress = () => {
+    setLogoutDialogVisible(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setLogoutLoading(true);
+    try {
+      await logout();
+      setLogoutDialogVisible(false);
+      router.replace('/(auth)/login');
+    } catch {
+      setLogoutLoading(false);
+      setLogoutDialogVisible(false);
+    }
   };
 
   return (
@@ -61,10 +65,22 @@ export default function SettingsScreen() {
         </Card>
 
         {/* Danger zone */}
-        <Button style={styles.logoutBtn} variant="secondary" label="Log Out" onPress={handleLogout} />
+        <Button style={styles.logoutBtn} variant="secondary" label="Log Out" onPress={handleLogoutPress} />
 
         <ThemedText variant="caption" style={styles.version}>Pawprint v1.0.0</ThemedText>
       </ScrollView>
+
+      <ConfirmationDialog
+        visible={logoutDialogVisible}
+        title="Log Out"
+        message="Are you sure you want to log out?"
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        destructive
+        loading={logoutLoading}
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setLogoutDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

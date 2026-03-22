@@ -18,6 +18,7 @@ import {
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -562,7 +563,9 @@ export default function CommunityDetailScreen() {
                 </View>
               )}
               <View style={styles.inputRow}>
-                <Button style={styles.pickImageBtn} variant="secondary" onPress={pickChatImage} label="Add image" accessibilityLabel="Attach image" />
+                <TouchableOpacity style={styles.imageIconBtn} onPress={pickChatImage} accessibilityLabel="Attach image" accessibilityRole="button">
+                  <Ionicons name="image-outline" size={20} color={colors.brand.primary} />
+                </TouchableOpacity>
                 <TextInput
                   style={styles.chatInput}
                   value={chatInput}
@@ -635,7 +638,7 @@ export default function CommunityDetailScreen() {
               </View>
             ) : (
               <TouchableOpacity style={styles.addThreadImageBtn} onPress={pickThreadMedia} accessibilityRole="button" accessibilityLabel="Add image to thread">
-                <ThemedText style={styles.addThreadImageText}>+ Add image</ThemedText>
+                <Ionicons name="image-outline" size={24} color={colors.brand.primary} />
               </TouchableOpacity>
             )}
 
@@ -872,8 +875,14 @@ const styles = StyleSheet.create({
   pickImageBtn: {
     minWidth: 44,
     minHeight: 44,
-    paddingHorizontal: 0,
-    borderRadius: radius.pill,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageIconBtn: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chatImagePreviewWrap: {
     marginHorizontal: 10,
@@ -961,18 +970,14 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   addThreadImageBtn: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border.strong,
-    backgroundColor: colors.bg.subtle,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  addThreadImageText: {
-    fontSize: 12,
-    color: colors.brand.primaryDark,
-    fontWeight: typography.weight.bold,
+    borderStyle: 'dashed',
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   threadMediaPreviewWrap: {
     borderRadius: 12,

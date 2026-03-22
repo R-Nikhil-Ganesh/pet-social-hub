@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Thread, useCommunityStore } from '@/store/communityStore';
 import { formatRelativeTime } from '@/utils/relativeTime';
+import { colors, shadows } from '@/theme/tokens';
 
 const FLAIRS: Record<string, { color: string; bg: string }> = {
   question: { color: '#2563EB', bg: '#EFF6FF' },
@@ -123,20 +124,18 @@ export function ThreadItem({ thread }: ThreadItemProps) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 8,
-    borderRadius: 14,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   pressArea: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: '#FFF1E6',
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
+    borderRadius: 24,
     padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
     gap: 10,
+    ...shadows.card,
   },
   voteCol: {
     alignItems: 'center',

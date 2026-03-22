@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { GradientBackground } from '@/components/ui/GradientBackground';
@@ -101,7 +102,10 @@ export default function CommunityScreen() {
         {(['my', 'discover'] as Tab[]).map((tab) => (
           <TouchableOpacity
             key={tab}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => {
+              setActiveTab(tab);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+            }}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
             activeOpacity={0.88}
             accessibilityRole="button"
