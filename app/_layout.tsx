@@ -3,7 +3,24 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
+import { API_BASE_URL } from '@/services/api';
 import { SkeletonShimmer } from '@/components/ui/SkeletonShimmer';
+
+const warmupBackend = async () => {
+  try {
+    // Silently ping backend health endpoint to warm it up on Onrender
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
+    await fetch(`${API_BASE_URL}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+  } catch {
+    // Ignore warmup errors - this is best-effort
+  }
+};
 
 export default function RootLayout() {
   const { isLoading, isAuthenticated, hydrate } = useAuthStore();
@@ -12,6 +29,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     hydrate();
+    // Warm up backend in background
+    warmupBackend();
   }, []);
 
   useEffect(() => {

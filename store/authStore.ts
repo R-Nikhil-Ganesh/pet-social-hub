@@ -2,6 +2,37 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 
+// Retry helper with exponential backoff for handling cold starts
+const retryWithBackoff = async <T,>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  initialDelayMs = 1000
+): Promise<T> => {
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      // Only retry on network errors or timeouts, not auth errors (401, 409)
+      const isRetryable =
+        !error?.response?.status || // No response = network error
+        error?.response?.status >= 500 || // Server error
+        error?.code === 'ECONNABORTED' ||
+        error?.message?.includes('timeout');
+
+      if (!isRetryable || attempt === maxAttempts) {
+        throw error;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = initialDelayMs * Math.pow(2, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError;
+};
+
 export interface PetProfile {
   id: number;
   name: string;
@@ -78,7 +109,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   login: async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+    const { data } = await retryWithBackoff(() =>
+      api.post('/auth/login', { email, password }).then((res) => res.data)
+    );
     await AsyncStorage.multiSet([
       ['pawprint_token', data.token],
       ['pawprint_user', JSON.stringify(data.user)],
@@ -87,7 +120,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (registerData) => {
-    const { data } = await api.post('/auth/register', registerData);
+    const { data } = await retryWithBackoff(() =>
+      api.post('/auth/register', registerData).then((res) => res.data)
+    );
     await AsyncStorage.multiSet([
       ['pawprint_token', data.token],
       ['pawprint_user', JSON.stringify(data.user)],

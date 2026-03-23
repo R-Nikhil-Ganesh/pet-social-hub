@@ -51,17 +51,24 @@ const buildLoginDebugInfo = (err: any) => {
 };
 
 const testNetworkEndpoint = async (
-  url: string
-): Promise<{ ok: boolean; code: string; status?: number }> => {
+  url: string,
+  timeoutMs: number = 15000
+): Promise<{ ok: boolean; code: string; status?: number; timing?: number }> => {
+  const startTime = Date.now();
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     const response = await fetch(url, { method: 'GET', signal: controller.signal });
     clearTimeout(timeoutId);
-    return { ok: true, code: 'OK', status: response.status };
+    const timing = Date.now() - startTime;
+    return { ok: true, code: 'OK', status: response.status, timing };
   } catch (err: any) {
-    return { ok: false, code: err?.code || err?.name || 'UNKNOWN', status: undefined };
+    const timing = Date.now() - startTime;
+    const errorName = err?.name || err?.code || 'UNKNOWN';
+    const isTimeout = errorName === 'AbortError' || timing >= timeoutMs - 100;
+    const code = isTimeout ? `TIMEOUT (${timing}ms)` : errorName;
+    return { ok: false, code, status: undefined, timing };
   }
 };
 
@@ -125,7 +132,11 @@ export default function LoginScreen() {
     const results: string[] = [];
     for (const endpoint of endpoints) {
       const result = await testNetworkEndpoint(endpoint.url);
-      results.push(`${endpoint.name}: ${result.ok ? `✓ (HTTP ${result.status})` : `✗ (${result.code})`}`);
+      if (result.ok) {
+        results.push(`${endpoint.name}: ✓ HTTP ${result.status} (${result.timing}ms)`);
+      } else {
+        results.push(`${endpoint.name}: ✗ ${result.code} (${result.timing}ms)`);
+      }
     }
 
     setNetworkTestResults(results.join('\n'));

@@ -64,6 +64,17 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
     onAnswer(session.currentQuestion, index);
   };
 
+  const cleanTriviaText = (value: string | null | undefined) => {
+    const normalized = String(value ?? '')
+      .replace(/\uFFFD/g, '')
+      .replace(/[–—]/g, '-')
+      .replace(/(\d)\?{2,}(\d)/g, '$1-$2')
+      .replace(/\?{3,}/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    return normalized || 'Unknown';
+  };
+
   if (session.status === 'waiting') {
     return (
       <View style={styles.waitingScreen}>
@@ -80,112 +91,135 @@ export function TriviaGame({ session, onAnswer, onLeave }: TriviaGameProps) {
 
   if (session.status === 'finished') {
     const won = session.winner_id === user?.id;
+    const opponentName = cleanTriviaText(session.opponent?.display_name ?? 'Opponent');
     return (
       <View style={styles.finishedContainer}>
-        <Ionicons name={won ? 'trophy' : 'close-circle-outline'} size={48} color={won ? '#EAB308' : '#A1A1AA'} />
-        <ThemedText style={styles.resultTitle}>{won ? 'You Won!' : 'Better Luck Next Time'}</ThemedText>
-        <View style={styles.scoreRow}>
-          <View style={styles.scoreBlock}>
-            <ThemedText style={styles.scoreLabel}>You</ThemedText>
-            <ThemedText style={styles.scoreValue}>{session.myScore}</ThemedText>
+        <Card style={styles.resultsCard}>
+          <Ionicons
+            name={won ? 'trophy' : 'close-circle-outline'}
+            size={44}
+            color={won ? '#EAB308' : '#A1A1AA'}
+          />
+          <ThemedText style={styles.resultTitle}>{won ? 'You Won!' : 'Final Scores'}</ThemedText>
+          <ThemedText style={styles.resultSubtitle}>
+            {won ? 'Great game. Your pet knowledge is elite.' : 'Good battle. Try another round.'}
+          </ThemedText>
+
+          <View style={styles.scoreSummaryRow}>
+            <View style={styles.scoreSummaryCol}>
+              <ThemedText style={styles.scoreLabel}>You</ThemedText>
+              <ThemedText style={styles.scoreValue}>{session.myScore}</ThemedText>
+            </View>
+            <View style={styles.scoreSummaryDivider} />
+            <View style={styles.scoreSummaryCol}>
+              <ThemedText style={styles.scoreLabel} numberOfLines={1}>
+                {opponentName}
+              </ThemedText>
+              <ThemedText style={styles.scoreValue}>{session.opponentScore}</ThemedText>
+            </View>
           </View>
-          <ThemedText style={styles.scoreSep}>vs</ThemedText>
-          <View style={styles.scoreBlock}>
-            <ThemedText style={styles.scoreLabel}>
-              {session.opponent?.display_name ?? 'Opponent'}
-            </ThemedText>
-            <ThemedText style={styles.scoreValue}>{session.opponentScore}</ThemedText>
+
+          <View style={styles.scorePillRow}>
+            <View style={styles.scorePill}>
+              <ThemedText style={styles.scorePillText}>You: {session.myScore}</ThemedText>
+            </View>
+            <View style={styles.scorePill}>
+              <ThemedText style={styles.scorePillText}>{opponentName}: {session.opponentScore}</ThemedText>
+            </View>
           </View>
-        </View>
-        {won && <PointsBadge points={100} size="lg" showLabel />}
-        <TouchableOpacity style={styles.doneBtn} onPress={onLeave}>
-          <ThemedText style={styles.doneBtnText}>Done</ThemedText>
-        </TouchableOpacity>
+
+          {won && <PointsBadge points={100} size="lg" showLabel />}
+          <TouchableOpacity style={styles.doneBtn} onPress={onLeave}>
+            <ThemedText style={styles.doneBtnText}>Done</ThemedText>
+          </TouchableOpacity>
+        </Card>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Scoreboard */}
-      <View style={styles.scoreboard}>
-        <View style={styles.playerInfo}>
-          <Avatar uri={user?.avatar_url} seed={user?.id ?? 'me'} size={36} />
-          <View>
-            <ThemedText style={styles.playerName}>You</ThemedText>
-            <ThemedText style={styles.playerScore}>{session.myScore} pts</ThemedText>
+      <Card style={styles.gameCard}>
+        {/* Scoreboard */}
+        <View style={styles.scoreboard}>
+          <View style={styles.playerInfo}>
+            <Avatar uri={user?.avatar_url} seed={user?.id ?? 'me'} size={36} />
+            <View>
+              <ThemedText style={styles.playerName}>You</ThemedText>
+              <ThemedText style={styles.playerScore}>{session.myScore} pts</ThemedText>
+            </View>
           </View>
-        </View>
-        <View style={styles.vsBox}>
-          <ThemedText style={styles.vsText}>VS</ThemedText>
-          <ThemedText style={styles.questionCount}>
-            Q{session.currentQuestion + 1}/{session.questions?.length ?? 10}
-          </ThemedText>
-        </View>
-        <View style={[styles.playerInfo, styles.playerInfoRight]}>
-          <View style={{ alignItems: 'flex-end' }}>
-            <ThemedText style={styles.playerName}>
-              {session.opponent?.display_name ?? '...'}
+          <View style={styles.vsBox}>
+            <ThemedText style={styles.vsText}>VS</ThemedText>
+            <ThemedText style={styles.questionCount}>
+              Q{session.currentQuestion + 1}/{session.questions?.length ?? 10}
             </ThemedText>
-            <ThemedText style={styles.playerScore}>{session.opponentScore} pts</ThemedText>
           </View>
-          <Avatar uri={session.opponent?.avatar_url} seed={session.opponent?.id ?? session.opponent?.username ?? 'opponent'} size={36} />
+          <View style={[styles.playerInfo, styles.playerInfoRight]}>
+            <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+              <ThemedText style={styles.playerName} numberOfLines={1}>
+                {cleanTriviaText(session.opponent?.display_name ?? '...')}
+              </ThemedText>
+              <ThemedText style={styles.playerScore}>{session.opponentScore} pts</ThemedText>
+            </View>
+            <Avatar uri={session.opponent?.avatar_url} seed={session.opponent?.id ?? session.opponent?.username ?? 'opponent'} size={36} />
+          </View>
         </View>
-      </View>
 
-      {/* Timer Bar */}
-      <View style={styles.timerContainer}>
-        <Animated.View
-          style={[
-            styles.timerBar,
-            {
-              width: progressAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['0%', '100%'],
-              }),
-              backgroundColor: timeLeft <= 5 ? '#EF4444' : '#7C3AED',
-            },
-          ]}
-        />
-      </View>
-      <ThemedText style={[styles.timerText, timeLeft <= 5 && styles.timerUrgent]}>
-        {timeLeft}s
-      </ThemedText>
+        {/* Timer Bar */}
+        <View style={styles.timerContainer}>
+          <Animated.View
+            style={[
+              styles.timerBar,
+              {
+                width: progressAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0%', '100%'],
+                }),
+                backgroundColor: timeLeft <= 5 ? '#EF4444' : '#7C3AED',
+              },
+            ]}
+          />
+        </View>
+        <ThemedText style={[styles.timerText, timeLeft <= 5 && styles.timerUrgent]}>
+          {timeLeft}s
+        </ThemedText>
 
-      {/* Question */}
-      {question && (
-        <View style={styles.questionSection}>
-          <ThemedText style={styles.questionText}>{question.question}</ThemedText>
-          <View style={styles.options}>
-            {question.options.map((option, index) => {
-              let btnStyle = styles.optionBtn;
-              if (answered !== null) {
-                if (index === question.correct_index) {
-                  btnStyle = { ...btnStyle, ...styles.optionCorrect } as typeof btnStyle;
-                } else if (index === answered && answered !== question.correct_index) {
-                  btnStyle = { ...btnStyle, ...styles.optionWrong } as typeof btnStyle;
+        {/* Question */}
+        {question && (
+          <View style={styles.questionSection}>
+            <ThemedText style={styles.questionText}>{cleanTriviaText(question.question)}</ThemedText>
+            <View style={styles.options}>
+              {question.options.map((option, index) => {
+                let btnStyle = styles.optionBtn;
+                if (answered !== null) {
+                  if (index === question.correct_index) {
+                    btnStyle = { ...btnStyle, ...styles.optionCorrect } as typeof btnStyle;
+                  } else if (index === answered && answered !== question.correct_index) {
+                    btnStyle = { ...btnStyle, ...styles.optionWrong } as typeof btnStyle;
+                  }
+                } else if (index === answered) {
+                  btnStyle = { ...btnStyle, ...styles.optionSelected } as typeof btnStyle;
                 }
-              } else if (index === answered) {
-                btnStyle = { ...btnStyle, ...styles.optionSelected } as typeof btnStyle;
-              }
 
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={btnStyle}
-                  onPress={() => handleAnswer(index)}
-                  disabled={answered !== null || timeLeft <= 0}
-                >
-                  <ThemedText style={styles.optionLabel}>
-                    {String.fromCharCode(65 + index)}.
-                  </ThemedText>
-                  <ThemedText style={styles.optionText}>{option}</ThemedText>
-                </TouchableOpacity>
-              );
-            })}
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={btnStyle}
+                    onPress={() => handleAnswer(index)}
+                    disabled={answered !== null || timeLeft <= 0}
+                  >
+                    <ThemedText style={styles.optionLabel}>
+                      {String.fromCharCode(65 + index)}.
+                    </ThemedText>
+                    <ThemedText style={styles.optionText}>{cleanTriviaText(option)}</ThemedText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-        </View>
-      )}
+        )}
+      </Card>
     </View>
   );
 }
@@ -194,6 +228,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   waitingContainer: {
     flex: 1,
@@ -222,45 +258,86 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 16,
+    paddingHorizontal: spacing.lg,
+  },
+  resultsCard: {
+    width: '100%',
+    maxWidth: 500,
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   resultEmoji: {
     fontSize: 64,
   },
   resultTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#18181B',
+    textAlign: 'center',
   },
-  scoreRow: {
+  resultSubtitle: {
+    fontSize: 14,
+    color: '#52525B',
+    textAlign: 'center',
+  },
+  scoreSummaryRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-    marginVertical: 8,
+    width: '100%',
+    alignItems: 'stretch',
+    backgroundColor: '#FFF5ED',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
+    overflow: 'hidden',
   },
-  scoreBlock: {
+  scoreSummaryCol: {
+    flex: 1,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    gap: 3,
+    minWidth: 0,
+  },
+  scoreSummaryDivider: {
+    width: 1,
+    backgroundColor: '#F1B3C9',
   },
   scoreLabel: {
     fontSize: 14,
     color: '#71717A',
+    fontWeight: '600',
   },
   scoreValue: {
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: '800',
     color: '#7C3AED',
   },
-  scoreSep: {
-    fontSize: 16,
-    color: '#A1A1AA',
+  scorePillRow: {
+    width: '100%',
+    gap: spacing.xs,
+  },
+  scorePill: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
+    backgroundColor: '#FFF5ED',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  scorePillText: {
+    textAlign: 'center',
+    color: '#52525B',
+    fontSize: 13,
+    fontWeight: '600',
   },
   doneBtn: {
     marginTop: 8,
     backgroundColor: '#7C3AED',
     borderRadius: 14,
-    paddingHorizontal: 40,
+    paddingHorizontal: 44,
     paddingVertical: 14,
   },
   doneBtnText: {
@@ -272,10 +349,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: spacing.md,
+    backgroundColor: '#FFF5ED',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
+    borderBottomColor: 'transparent',
   },
   playerInfo: {
     flexDirection: 'row',
@@ -332,8 +412,8 @@ const styles = StyleSheet.create({
   },
   questionSection: {
     flex: 1,
-    padding: 20,
-    gap: 20,
+    padding: spacing.md,
+    gap: spacing.md,
   },
   questionText: {
     fontSize: 18,
@@ -348,12 +428,12 @@ const styles = StyleSheet.create({
   optionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF5ED',
     borderRadius: 14,
     padding: 16,
     gap: 12,
-    borderWidth: 2,
-    borderColor: '#E4E4E7',
+    borderWidth: 1,
+    borderColor: '#F1B3C9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -361,7 +441,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   optionSelected: {
-    borderColor: '#7C3AED',
+    borderColor: '#F97316',
     backgroundColor: '#F5F3FF',
   },
   optionCorrect: {
@@ -395,5 +475,10 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '600',
     fontSize: 14,
+  },
+  gameCard: {
+    flex: 1,
+    padding: spacing.sm,
+    gap: spacing.xs,
   },
 });
