@@ -109,25 +109,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   login: async (email, password) => {
-    const { data } = await retryWithBackoff(() =>
+    const { token, user } = await retryWithBackoff(() =>
       api.post('/auth/login', { email, password }).then((res) => res.data)
     );
     await AsyncStorage.multiSet([
-      ['pawprint_token', data.token],
-      ['pawprint_user', JSON.stringify(data.user)],
+      ['pawprint_token', token],
+      ['pawprint_user', JSON.stringify(user)],
     ]);
-    set({ token: data.token, user: data.user, isAuthenticated: true });
+    set({ token, user, isAuthenticated: true });
   },
 
   register: async (registerData) => {
-    const { data } = await retryWithBackoff(() =>
+    const { token, user } = await retryWithBackoff(() =>
       api.post('/auth/register', registerData).then((res) => res.data)
     );
     await AsyncStorage.multiSet([
-      ['pawprint_token', data.token],
-      ['pawprint_user', JSON.stringify(data.user)],
+      ['pawprint_token', token],
+      ['pawprint_user', JSON.stringify(user)],
     ]);
-    set({ token: data.token, user: data.user, isAuthenticated: true });
+    set({ token, user, isAuthenticated: true });
   },
 
   logout: async () => {
